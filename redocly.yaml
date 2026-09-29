@@ -1,0 +1,4 @@
+extends:
+  - recommended
+rules:
+  no-server-example.com: off   # localhost + placeholder host are intentional until Sprint 3

@@ -1,0 +1,51 @@
+# ---------- Secrets: NEVER commit these ----------
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+google-services.json
+**/src/main/resources/application-local.*
+**/src/main/resources/application-secret*.*
+local.properties
+
+# ---------- Gradle / Maven ----------
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+target/
+out/
+bin/
+
+# ---------- Kotlin / Java ----------
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+.kotlin/
+
+# ---------- Android ----------
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+app/release/
+
+# ---------- IDEs ----------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.fleet/
+*.swp
+
+# ---------- Node (npx tools: Prism, Redocly) ----------
+node_modules/
+
+# ---------- OS junk ----------
+.DS_Store
+Thumbs.db
