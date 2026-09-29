@@ -42,6 +42,7 @@ app/release/
 .vscode/
 .fleet/
 *.swp
+.omc
 
 # ---------- Node (npx tools: Prism, Redocly) ----------
 node_modules/
