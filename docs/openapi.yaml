@@ -6,22 +6,22 @@
 openapi: 3.0.3
 
 info:
-  title: Workout Tracker API
+  title: Recipe and Meal Tracker API
   version: 1.0.0
-  description: |
-    Example contract for a workout tracker. Users log workouts made of exercises.
+  description: API for creating recipes and planning meals
+    Example contract for a recipe tracker. Users log meals made of recipes.
     Every error uses RFC 9457 Problem Details (see components/schemas/Problem).
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
   contact:
-    name: Team 00
-    url: https://github.com/OWNER/REPO
+    name: Team 03
+    url: https://github.com/Solian21/CST438_P2_API
 
 servers:
   - url: http://localhost:8080
     description: Local (docker compose up)
-  - url: https://your-api.example.com
+  - url: https://recipe-api.example.com
     description: Production (replace in Sprint 3)
 
 # Every endpoint requires a Bearer token unless it overrides this with `security: []`.
@@ -29,22 +29,27 @@ security:
   - bearerAuth: []
 
 tags:
-  - name: Workouts
-    description: A user's own workouts
-  - name: Exercises
-    description: The shared exercise catalog
+  - name: Recipes
+    description: The shared recipe catalog
+  - name: Ingredients
+    description: The shared ingredient catalog
   - name: Users
     description: The signed-in user's own account
   - name: Admin
     description: Admin-only user management
 
 paths:
-  /api/v1/workouts:
+  /api/v1/recipes:
     get:
-      tags: [Workouts]
-      operationId: listMyWorkouts
-      summary: List my workouts (paginated, sortable)
+      tags: [Recipes]
+      operationId: listRecipes
+      summary: Lists available recipes (paginated, sortable)
       parameters:
+        - name: mealplan
+          in: query
+          description: Lists recipes in the specific mealplan
+          schema:
+            $ref: '#/components/schemas/Mealplan'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'
         - name: sort
@@ -60,50 +65,50 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '200':
-          description: One page of the caller's workouts
+          description: One page of recipes.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkoutPage'
+                $ref: '#/components/schemas/RecipePage'
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
-      tags: [Workouts]
-      operationId: createWorkout
-      summary: Log a workout
+      tags: [Recipes]
+      operationId: createRecipe
+      summary: Log a Recipe
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkoutCreate'
+              $ref: '#/components/schemas/RecipeCreate'
       responses:
         '500':
           $ref: '#/components/responses/InternalError'
         '201':
-          description: Created. POST is not idempotent; two calls make two workouts.
+          description: Created. POST is not idempotent; two calls make two recipes.
           headers:
             Location:
-              description: URL of the new workout
+              description: URL of the new recipe
               schema:
                 type: string
-                example: /api/v1/workouts/42
+                example: /api/v1/recipes/42
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workout'
+                $ref: '#/components/schemas/Recipe'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/workouts/{workoutId}:
+  /api/v1/recipes/{recipeId}:
     parameters:
-      - $ref: '#/components/parameters/WorkoutId'
+      - $ref: '#/components/parameters/RecipeId'
     get:
-      tags: [Workouts]
-      operationId: getWorkout
-      summary: Get one of my workouts
+      tags: [Recipes]
+      operationId: getRecipe
+      summary: Get one of the recipes
       responses:
         '500':
           $ref: '#/components/responses/InternalError'
@@ -114,30 +119,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workout'
+                $ref: '#/components/schemas/Recipe'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
     put:
-      tags: [Workouts]
-      operationId: replaceWorkout
-      summary: Replace a workout (idempotent)
+      tags: [Recipes]
+      operationId: replaceRecipe
+      summary: Replace a recipe (idempotent)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkoutCreate'
+              $ref: '#/components/schemas/RecipeCreate'
       responses:
         '500':
           $ref: '#/components/responses/InternalError'
         '200':
-          description: The replaced workout
+          description: The replaced recipe
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workout'
+                $ref: '#/components/schemas/Recipe'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -145,24 +150,24 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     patch:
-      tags: [Workouts]
-      operationId: updateWorkout
-      summary: Change some fields of a workout
+      tags: [Recipes]
+      operationId: updateRecipe
+      summary: Change some fields of a recipe
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkoutPatch'
+              $ref: '#/components/schemas/RecipePatch'
       responses:
         '500':
           $ref: '#/components/responses/InternalError'
         '200':
-          description: The updated workout
+          description: The updated recipe
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workout'
+                $ref: '#/components/schemas/Recipe'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -170,9 +175,9 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
-      tags: [Workouts]
-      operationId: deleteWorkout
-      summary: Delete a workout
+      tags: [Recipes]
+      operationId: deleteRecipe
+      summary: Delete a recipe
       responses:
         '500':
           $ref: '#/components/responses/InternalError'
@@ -184,39 +189,62 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-
-  /api/v1/exercises:
+  /api/v1/ingredients:
     get:
-      tags: [Exercises]
-      operationId: listExercises
-      summary: Browse the exercise catalog (public, filterable)
+      tags: [Ingredients]
+      operationId: listIngredients
+      summary: Browse the available ingredients (public, filterable)
       security: []          # public: no token needed
       parameters:
-        - name: muscleGroup
-          in: query
-          description: Only exercises for this muscle group
-          schema:
-            $ref: '#/components/schemas/MuscleGroup'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'
       responses:
         '500':
           $ref: '#/components/responses/InternalError'
         '200':
-          description: One page of exercises
+          description: One page of ingredients
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExercisePage'
+                $ref: '#/components/schemas/IngredientsPage'
         '400':
           $ref: '#/components/responses/BadRequest'
+    post:
+      tags: [Ingredients]
+      operationId: createIngredient
+      summary: Add an ingredient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientCreate'
+      responses:
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '201':
+          description: Created. POST is not idempotent; two calls make two ingredients.
+          headers:
+            Location:
+              description: URL of the new ingredient
+              schema:
+                type: string
+                example: /api/v1/ingredients/42
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/v1/users/me:
     delete:
       tags: [Users]
       operationId: deleteMyAccount
       summary: Delete my own account and ALL my data
-      description: Any signed-in user. Deletes the user row and everything they own (workouts, custom exercises).
+      description: Any signed-in user. Deletes the user row and everything they own (custom recipes, mealplans).
       responses:
         '500':
           $ref: '#/components/responses/InternalError'
@@ -334,8 +362,8 @@ components:
       description: JWT from the OAuth2 Authorization Code + PKCE flow (with Google, send the ID token; Google's access_token is opaque).
 
   parameters:
-    WorkoutId:
-      name: workoutId
+    RecipeId:
+      name: recipeId
       in: path
       required: true
       schema:
@@ -361,111 +389,100 @@ components:
         default: 20
 
   schemas:
-    MuscleGroup:
-      type: string
-      enum: [CHEST, BACK, LEGS, SHOULDERS, ARMS, CORE, CARDIO]
-
-    Workout:
+    Mealplan:
       type: object
-      required: [id, performedOn, exercises]
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+          example: 67
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipe'
+
+    Recipe:
+      type: object
+      required: [id, ingredients, measurements, instructions]
       properties:
         id:
           type: integer
           format: int64
           readOnly: true
           example: 42
-        performedOn:
-          type: string
-          format: date
-          example: '2026-10-01'
-        durationMin:
-          type: integer
-          minimum: 1
-          nullable: true
-          example: 45
-        notes:
-          type: string
-          maxLength: 500
-          nullable: true
-          example: Felt strong today
-        exercises:
+        ingredients:
           type: array
           items:
-            $ref: '#/components/schemas/WorkoutExercise'
+            $ref: '#/components/schemas/Ingredient'
+        measurements:
+          type: string
+          nullable: true
+          example: ½ cup
+        instructions:
+          type: string
+          nullable: true
+          example: Instructions for a recipe
 
-    WorkoutCreate:
+    RecipeCreate:
       description: Body for POST and PUT. PUT replaces every field.
       type: object
-      required: [performedOn, exercises]
+      required: [ingredients, measurements, instructions]
       properties:
-        performedOn:
-          type: string
-          format: date
-          example: '2026-10-01'
-        durationMin:
-          type: integer
-          minimum: 1
-          nullable: true
-          example: 45
-        notes:
-          type: string
-          maxLength: 500
-          nullable: true
-        exercises:
+        ingredients:
           type: array
-          minItems: 1
           items:
-            $ref: '#/components/schemas/WorkoutExercise'
+            $ref: '#/components/schemas/Ingredient'
+        measurements:
+          type: string
+          nullable: true
+          example: ½ cup
+        instructions:
+          type: string
+          nullable: true
+          example: Instructions for a recipe
 
-    WorkoutPatch:
+    IngredientCreate:
+      description: Body for POST and PUT. PUT replaces every field.
+      type: object
+      required: [ingredientName]
+      properties:
+        ingredientName:
+          type: string
+          nullable: true
+          example: Brown Sugar
+
+    RecipePatch:
       description: Body for PATCH. Send only the fields you want to change.
       type: object
       minProperties: 1
       properties:
-        durationMin:
-          type: integer
-          minimum: 1
-          nullable: true
-        notes:
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        measurements:
           type: string
-          maxLength: 500
           nullable: true
-
-    WorkoutExercise:
-      type: object
-      required: [exerciseId, sets, reps]
-      properties:
-        exerciseId:
-          type: integer
-          format: int64
-          example: 7
-        sets:
-          type: integer
-          minimum: 1
-          example: 3
-        reps:
-          type: integer
-          minimum: 1
-          example: 10
-        weightKg:
-          type: number
-          format: double
+          example: ½ cup
+        instructions:
+          type: string
           nullable: true
-          example: 60.0
+          example: Instructions for a recipe
 
-    Exercise:
+    Ingredient:
       type: object
-      required: [id, name, muscleGroup]
+      required: [id, ingredientName]
       properties:
         id:
           type: integer
           format: int64
-          example: 7
-        name:
+          readOnly: true
+          example: 67
+        ingredientName:
           type: string
-          example: Back Squat
-        muscleGroup:
-          $ref: '#/components/schemas/MuscleGroup'
+          nullable: true
+          example: Apple Slices
 
     PageMeta:
       description: >-
@@ -488,25 +505,25 @@ components:
           type: integer
           example: 3
 
-    WorkoutPage:
+    RecipePage:
       type: object
       required: [content, page]
       properties:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/Workout'
+            $ref: '#/components/schemas/Recipe'
         page:
           $ref: '#/components/schemas/PageMeta'
 
-    ExercisePage:
+    IngredientsPage:
       type: object
       required: [content, page]
       properties:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/Exercise'
+            $ref: '#/components/schemas/Ingredient'
         page:
           $ref: '#/components/schemas/PageMeta'
 
@@ -567,10 +584,10 @@ components:
           example: 404
         detail:
           type: string
-          example: Workout 42 not found
+          example: Recipe 42 not found
         instance:
           type: string
-          example: /api/v1/workouts/42
+          example: /api/v1/recipe/42
 
   responses:
     BadRequest:
@@ -620,3 +637,4 @@ components:
           example:
             title: Internal Server Error
             status: 500
+
