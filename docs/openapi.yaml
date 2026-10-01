@@ -1,15 +1,15 @@
-# Starter OpenAPI contract for CST 438 Project 02.
-# Copy to docs/openapi.yaml in your repo, then replace Workout/Exercise with YOUR resources.
+﻿# Starter OpenAPI contract for CST 438 Project 02.
 # Render it:   https://editor.swagger.io  (File > Import file, or paste)
 # Lint it:     npx @redocly/cli lint docs/openapi.yaml
 # Mock it:     npx @stoplight/prism-cli mock docs/openapi.yaml   -> http://127.0.0.1:4010
 openapi: 3.0.3
 
+
 info:
   title: Recipe and Meal Tracker API
   version: 1.0.0
-  description: API for creating recipes and planning meals
-    Example contract for a recipe tracker. Users log meals made of recipes.
+  description: |
+    API for creating recipes and planning meals.
     Every error uses RFC 9457 Problem Details (see components/schemas/Problem).
   license:
     name: MIT
@@ -18,15 +18,18 @@ info:
     name: Team 03
     url: https://github.com/Solian21/CST438_P2_API
 
+
 servers:
   - url: http://localhost:8080
     description: Local (docker compose up)
   - url: https://recipe-api.example.com
     description: Production (replace in Sprint 3)
 
+
 # Every endpoint requires a Bearer token unless it overrides this with `security: []`.
 security:
   - bearerAuth: []
+
 
 tags:
   - name: Recipes
@@ -38,6 +41,7 @@ tags:
   - name: Admin
     description: Admin-only user management
 
+
 paths:
   /api/v1/recipes:
     get:
@@ -45,11 +49,14 @@ paths:
       operationId: listRecipes
       summary: Lists available recipes (paginated, sortable)
       parameters:
-        - name: mealplan
+        - name: mealPlanId
           in: query
-          description: Lists recipes in the specific mealplan
+          required: false 
+          description: Only list recipes in this meal plan
           schema:
-            $ref: '#/components/schemas/Mealplan'
+              type: integer
+              format: int64
+              example: 67
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'
         - name: sort
@@ -57,8 +64,8 @@ paths:
           description: Field and direction, Spring Pageable style.
           schema:
             type: string
-            enum: ['performedOn,desc', 'performedOn,asc']
-            default: 'performedOn,desc'
+            enum: ['name,asc', 'name,desc', 'createdAt,desc', 'createdAt,asc']
+            default: 'createdAt,desc'
       responses:
         '500':
           $ref: '#/components/responses/InternalError'
@@ -75,7 +82,7 @@ paths:
     post:
       tags: [Recipes]
       operationId: createRecipe
-      summary: Log a Recipe
+      summary: Create a Recipe
       requestBody:
         required: true
         content:
@@ -102,6 +109,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+
   /api/v1/recipes/{recipeId}:
     parameters:
       - $ref: '#/components/parameters/RecipeId'
@@ -115,7 +123,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '200':
-          description: The workout
+          description: The recipe
           content:
             application/json:
               schema:
@@ -189,6 +197,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+
+
   /api/v1/ingredients:
     get:
       tags: [Ingredients]
@@ -239,7 +249,28 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+
   /api/v1/users/me:
+    get:    
+      tags: [Users]
+      operationId: getMe
+      summary: Get the signed-in user
+      description: >-
+        Returns the caller's account. On the first call with a new Google
+        account, the user row is created with role USER.
+      responses:
+        '200':
+          description: The signed-in user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+
     delete:
       tags: [Users]
       operationId: deleteMyAccount
@@ -252,6 +283,7 @@ paths:
           description: Deleted. The token is now useless.
         '401':
           $ref: '#/components/responses/Unauthorized'
+
 
   /api/v1/users:
     get:
@@ -276,6 +308,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+
 
   /api/v1/users/{userId}:
     parameters:
@@ -353,6 +386,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+
 components:
   securitySchemes:
     bearerAuth:
@@ -360,6 +394,7 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT from the OAuth2 Authorization Code + PKCE flow (with Google, send the ID token; Google's access_token is opaque).
+
 
   parameters:
     RecipeId:
@@ -388,29 +423,80 @@ components:
         maximum: 100
         default: 20
 
+
   schemas:
-    Mealplan:
+    MealPlan:
       type: object
+      required: [id, weekStart, entries]
       properties:
         id:
           type: integer
           format: int64
           readOnly: true
           example: 67
-        recipes:
+        weekStart:
+          type: string
+          format: date
+          example: "2026-10-05"
+        entries:
           type: array
           items:
-            $ref: '#/components/schemas/Recipe'
+            $ref: '#/components/schemas/MealPlanEntry'
+
+
+    MealPlanEntry:
+      type: object
+      required: [id, mealPlanId, recipeId, plannedDate, mealType]
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+          example: 54
+        mealPlanId:
+          type: integer
+          format: int64
+          readOnly: true
+          example: 23
+        recipeId:
+          type: integer
+          format: int64
+          example: 22
+        plannedDate:
+          type: string
+          format: date
+          example: "2026-10-01"
+        mealType:
+          type: string
+          enum: [BREAKFAST, LUNCH, DINNER]
+    
+    MealPlanCreate:
+      description: Body for POST and PUT. PUT replaces every field.
+      type: object
+      required: [weekStart]
+      properties:
+        weekStart:
+          type: string
+          format: date
+          example: "2026-10-05"
+
 
     Recipe:
       type: object
-      required: [id, ingredients, measurements, instructions]
+      required: [id, name, ingredients, measurements, instructions]
       properties:
         id:
           type: integer
           format: int64
           readOnly: true
           example: 42
+        name:
+          type: string
+          example: Brown Sugar Oatmeal
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
         ingredients:
           type: array
           items:
@@ -424,11 +510,16 @@ components:
           nullable: true
           example: Instructions for a recipe
 
+
     RecipeCreate:
       description: Body for POST and PUT. PUT replaces every field.
       type: object
-      required: [ingredients, measurements, instructions]
+      required: [name, ingredients, measurements, instructions]
       properties:
+        name:
+          type: string
+          minLength: 1
+          example: Brown Sugar Oatmeal
         ingredients:
           type: array
           items:
@@ -441,6 +532,7 @@ components:
           type: string
           nullable: true
           example: Instructions for a recipe
+
 
     IngredientCreate:
       description: Body for POST and PUT. PUT replaces every field.
@@ -451,6 +543,7 @@ components:
           type: string
           nullable: true
           example: Brown Sugar
+
 
     RecipePatch:
       description: Body for PATCH. Send only the fields you want to change.
@@ -470,6 +563,7 @@ components:
           nullable: true
           example: Instructions for a recipe
 
+
     Ingredient:
       type: object
       required: [id, ingredientName]
@@ -483,6 +577,7 @@ components:
           type: string
           nullable: true
           example: Apple Slices
+
 
     PageMeta:
       description: >-
@@ -505,6 +600,7 @@ components:
           type: integer
           example: 3
 
+
     RecipePage:
       type: object
       required: [content, page]
@@ -516,6 +612,7 @@ components:
         page:
           $ref: '#/components/schemas/PageMeta'
 
+
     IngredientsPage:
       type: object
       required: [content, page]
@@ -526,6 +623,7 @@ components:
             $ref: '#/components/schemas/Ingredient'
         page:
           $ref: '#/components/schemas/PageMeta'
+
 
     User:
       type: object
@@ -545,9 +643,11 @@ components:
         role:
           $ref: '#/components/schemas/Role'
 
+
     Role:
       type: string
       enum: [USER, ADMIN]
+
 
     UserPatch:
       description: Body for PATCH /api/v1/users/{userId}. Today the only editable field is the role.
@@ -556,6 +656,7 @@ components:
       properties:
         role:
           $ref: '#/components/schemas/Role'
+
 
     UserPage:
       type: object
@@ -567,6 +668,7 @@ components:
             $ref: '#/components/schemas/User'
         page:
           $ref: '#/components/schemas/PageMeta'
+
 
     Problem:
       description: RFC 9457 Problem Details. The ONE error body every endpoint returns.
@@ -587,7 +689,8 @@ components:
           example: Recipe 42 not found
         instance:
           type: string
-          example: /api/v1/recipe/42
+          example: /api/v1/recipes/42
+
 
   responses:
     BadRequest:
@@ -627,7 +730,7 @@ components:
           example:
             title: Not Found
             status: 404
-            detail: Workout 42 not found
+            detail: Recipe 42 not found
     InternalError:
       description: Unexpected server error. Your app still needs to show something useful.
       content:
@@ -637,4 +740,3 @@ components:
           example:
             title: Internal Server Error
             status: 500
-

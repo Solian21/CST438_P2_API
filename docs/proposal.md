@@ -1,7 +1,7 @@
 # <API name> Proposal
 
 ## 1. The pitch (one paragraph)
-What the API does, who uses it, and why a client app would need it.
+The Recipe and Meal Planner API allows users of our app to create, organize, and manage recipes and meal plans. Users can search through existing recipes as well as existing ingredients. The API stores recipes with their ingredients and cooking instructions. The Android app uses this API so users can save recipes, view their ingredients and instructions, and organize them into meal plans.
 
 ## 2. Resources
 | Resource | Key fields | Relationships |
