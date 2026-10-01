@@ -95,6 +95,7 @@ erDiagram
 | PATCH | /api/v1/meal_plans/{mealPlanId}/entries/{entryId} | user | Update a scheduled meal. |
 | DELETE | /api/v1/meal_plans/{mealPlanId}/entries/{entryId} | user | Remove a scheduled meal. |
 | ... | ... | ... | ... |
+
 Mark each endpoint `public`, `user`, or `admin`. Mark which collection paginates and which
 filters or sorts.
 
