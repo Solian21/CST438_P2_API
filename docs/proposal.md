@@ -119,7 +119,7 @@ filters or sorts.
 
 ## 7. Team and Sprint 1
 Carlos Solian owns the 2 repos: 
-https://github.com/Solian21/CST438_P2_API 
-https://github.com/Solian21/CST438_P2_Andrioid_App
+- https://github.com/Solian21/CST438_P2_API 
+- https://github.com/Solian21/CST438_P2_Andrioid_App
 Doyoung Yang owns the Spring Boot.
 Project Board: https://github.com/users/Solian21/projects/1/views/1
