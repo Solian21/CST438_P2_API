@@ -118,4 +118,8 @@ filters or sorts.
 - Another risk is that a user could try to edit or view another user's mealplan or edit a lot of things on the API at once. What we could do to find out is to test what are the limits of a single user and figure out a workaround if an issue shows up.
 
 ## 7. Team and Sprint 1
-Who owns what in Sprint 1. Link your Project board and Sprint 1 milestone.
+Carlos Solian owns the 2 repos: 
+https://github.com/Solian21/CST438_P2_API 
+https://github.com/Solian21/CST438_P2_Andrioid_App
+Doyoung Yang owns the Spring Boot.
+Project Board: https://github.com/users/Solian21/projects/1/views/1
