@@ -6,7 +6,7 @@ The Recipe and Meal Planner API allows users of our app to create, organize, and
 ## 2. Resources
 | Resource | Key fields | Relationships |
 |---|---|---|
-| Users | id, email, displayName, role | A User can own many Recipes and MealPlans. An ADMIN User can manage other Users. |
+| Users | id, email, oauthSub, displayName, role | A User can own many Recipes and MealPlans. An ADMIN User can manage other Users. |
 | Recipes | id, name, measurements, instructions | A Recipe can use many Ingredients and can appear in many MealPlanEntries. |
 | Ingredients | id, ingredientName | An Ingredient can be used by many Recipes. |
 | MealPlans | id, weekStart | A User owns many MealPlans. A MealPlan has many MealPlanEntries. |
@@ -30,6 +30,7 @@ erDiagram
     USER {
         bigint id PK
         string email UK
+        string oauth_sub UK
         string display_name
         string role
     }
@@ -100,10 +101,17 @@ Mark each endpoint `public`, `user`, or `admin`. Mark which collection paginates
 filters or sorts.
 
 ## 5. Technical choices
-- **Database host:** (Neon, Supabase, Railway, Atlas, ...) and why
-- **OAuth2 provider:** (Google, GitHub, Auth0) and confirmation that it supports Authorization Code + PKCE from a native app
-- **Repo layout:** monorepo or split, and why
-These become your ADRs later.
+- **Database host:** Neon (serverless PostgreSQL). Our data is relational (users, recipes,
+  ingredients, meal plans, and join tables with foreign keys), so PostgreSQL fits better
+  than a document store. Neon's free tier is enough for a class project, and every team
+  member can connect to the same hosted database without running it locally.
+- **OAuth2 provider:** Google. Google supports the Authorization Code flow with PKCE for
+  native apps, which is what the Android app needs, and every user already has a Google
+  account. The API acts as a resource server, validates the Google-issued token, and maps
+  the token's subject ID to a User row.
+- **Repo layout:** Split repos. This repo holds only the API, and the Android app lives in
+  its own repo. The two are built, deployed, and tested independently and share only the
+  OpenAPI contract (`docs/openapi.yaml`), so each team can work without blocking the other.
 
 ## 6. Risks
 - One risk is that deleting or changing one of the objects could affect how another object acts, like deleting an ingredient in recipes. What we will do first to find out is to test how the API handles deletions or changes.
