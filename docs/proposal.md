@@ -18,12 +18,14 @@ try changes at https://mermaid.live):
 
 ```mermaid
 erDiagram
-    USER ||--o{ RECIPE : may_own
     USER ||--o{ MEAL_PLAN : may_own
+    USER o|--o{ RECIPE : may_own
+
     RECIPE ||--o{ RECIPE_INGREDIENT : contains
     INGREDIENT ||--o{ RECIPE_INGREDIENT : used_in
+
     MEAL_PLAN ||--o{ MEAL_PLAN_ENTRY : contains
-    RECIPE ||--o{ MEAL_PLAN_ENTRY : planned_in
+    RECIPE ||--o{ MEAL_PLAN_ENTRY : scheduled_in
 
     USER {
         bigint id PK
@@ -34,15 +36,16 @@ erDiagram
 
     RECIPE {
         bigint id PK
-        bigint user_id FK
+        bigint user_id FK "nullable for shared recipes"
         string name
+        datetime created_at
         string measurements "nullable"
         string instructions "nullable"
     }
 
     INGREDIENT {
         bigint id PK
-        string ingredient_name UK
+        string ingredient_name
     }
 
     RECIPE_INGREDIENT {
