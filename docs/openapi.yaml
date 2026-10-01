@@ -1,4 +1,4 @@
-﻿# Starter OpenAPI contract for CST 438 Project 02.
+# Starter OpenAPI contract for CST 438 Project 02.
 # Render it:   https://editor.swagger.io  (File > Import file, or paste)
 # Lint it:     npx @redocly/cli lint docs/openapi.yaml
 # Mock it:     npx @stoplight/prism-cli mock docs/openapi.yaml   -> http://127.0.0.1:4010
@@ -40,6 +40,8 @@ tags:
     description: The signed-in user's own account
   - name: Admin
     description: Admin-only user management
+  - name: MealPlans
+    description: weekly meal plans and their scheduled dates
 
 
 paths:
@@ -49,14 +51,6 @@ paths:
       operationId: listRecipes
       summary: Lists available recipes (paginated, sortable)
       parameters:
-        - name: mealPlanId
-          in: query
-          required: false 
-          description: Only list recipes in this meal plan
-          schema:
-              type: integer
-              format: int64
-              example: 67
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'
         - name: sort
@@ -269,8 +263,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalError'
-
-
     delete:
       tags: [Users]
       operationId: deleteMyAccount
@@ -385,6 +377,210 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        
+  /api/v1/meal_plans:
+    get:
+      tags: [MealPlans]
+      operationId: listMealPlans
+      summary: List the signed-in user's meal plans
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: A paginated list of the user's meal plans
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlanPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [MealPlans]
+      operationId: createMealPlan
+      summary: Create a new weekly meal plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealPlanCreate'
+      responses:
+        '201':
+          description: Meal plan created
+          headers:
+            Location:
+              description: URL of the new meal plan
+              schema:
+                type: string
+                example: /api/v1/meal-plans/67
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/meal_plans/{mealPlanId}:
+    parameters:
+      - $ref: '#/components/parameters/MealPlanId'
+    get:
+      tags: [MealPlans]
+      operationId: getMealPlan
+      summary: Get one meal plan and its entries
+      responses:
+        '200':
+          description: The requested meal plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags: [MealPlans]
+      operationId: updateMealPlan
+      summary: Change a meal plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealPlanPatch'
+      responses:
+        '200':
+          description: The updated meal plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlan'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [MealPlans]
+      operationId: deleteMealPlan
+      summary: Delete a meal plan and its entries
+      responses:
+        '204':
+          description: Meal plan and its entries deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/meal-plans/{mealPlanId}/entries:
+    parameters:
+      - $ref: '#/components/parameters/MealPlanId'
+
+    get:
+      tags: [MealPlans]
+      operationId: listMealPlanEntries
+      summary: List the meals in a meal plan
+      responses:
+        '200':
+          description: The planned meals in the meal plan
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MealPlanEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [MealPlans]
+      operationId: addMealPlanEntry
+      summary: Add a recipe to a meal plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealPlanEntryCreate'
+      responses:
+        '201':
+          description: Meal added to the meal plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlanEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+          
+  /api/v1/meal-plans/{mealPlanId}/entries/{entryId}:
+    parameters:
+      - $ref: '#/components/parameters/MealPlanId'
+      - $ref: '#/components/parameters/EntryId'
+
+    patch:
+      tags: [MealPlans]
+      operationId: updateMealPlanEntry
+      summary: Change a planned meal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealPlanEntryPatch'
+      responses:
+        '200':
+          description: The updated planned meal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealPlanEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [MealPlans]
+      operationId: deleteMealPlanEntry
+      summary: Remove a planned meal
+      responses:
+        '204':
+          description: Planned meal removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
 
 components:
@@ -445,7 +641,7 @@ components:
 
 
   schemas:
-        MealPlan:
+    MealPlan:
       type: object
       required: [id, weekStart, entries]
       properties:
@@ -545,6 +741,17 @@ components:
           type: string
           enum: [BREAKFAST, LUNCH, DINNER]
           example: LUNCH
+          
+    MealPlanPage:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/MealPlan'
+        page:
+          $ref: '#/components/schemas/PageMeta'
 
 
     Recipe:
