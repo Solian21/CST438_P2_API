@@ -6,8 +6,11 @@ The Recipe and Meal Planner API allows users of our app to create, organize, and
 ## 2. Resources
 | Resource | Key fields | Relationships |
 |---|---|---|
-| User | id, email, displayName, role | a User has many Workouts |
-| ... | ... | ... |
+| Users | id, email, displayName, role | A User can own many Recipes and MealPlans. An ADMIN User can manage other Users. |
+| Recipes | id, name, measurements, instructions | A Recipe can use many Ingredients and can appear in many MealPlanEntries. |
+| Ingredients | id, ingredientName | An Ingredient can be used by many Recipes. |
+| MealPlans | id, weekStart | A User owns many MealPlans. A MealPlan has many MealPlanEntries. |
+| MealPlanEntries | id, mealPlanId, recipeId, plannedDate, mealType | Each entry belongs to one MealPlan and references one Recipe. |
 
 ## 3. ER sketch
 Tables, primary and foreign keys, and cardinality. Edit this Mermaid diagram (it renders on GitHub;
@@ -15,16 +18,53 @@ try changes at https://mermaid.live):
 
 ```mermaid
 erDiagram
-    USER ||--o{ THING : owns
+    USER ||--o{ MEAL_PLAN : may_own
+    USER o|--o{ RECIPE : may_own
+
+    RECIPE ||--o{ RECIPE_INGREDIENT : contains
+    INGREDIENT ||--o{ RECIPE_INGREDIENT : used_in
+
+    MEAL_PLAN ||--o{ MEAL_PLAN_ENTRY : contains
+    RECIPE ||--o{ MEAL_PLAN_ENTRY : scheduled_in
+
     USER {
         bigint id PK
         string email UK
+        string display_name
+        string role
     }
-    THING {
+
+    RECIPE {
+        bigint id PK
+        bigint user_id FK "nullable for shared recipes"
+        string name
+        datetime created_at
+        string measurements "nullable"
+        string instructions "nullable"
+    }
+
+    INGREDIENT {
+        bigint id PK
+        string ingredient_name
+    }
+
+    RECIPE_INGREDIENT {
+        bigint recipe_id PK, FK
+        bigint ingredient_id PK, FK
+    }
+
+    MEAL_PLAN {
         bigint id PK
         bigint user_id FK
-        string name
-        string notes "nullable"
+        date week_start
+    }
+
+    MEAL_PLAN_ENTRY {
+        bigint id PK
+        bigint meal_plan_id FK
+        bigint recipe_id FK
+        date planned_date
+        string meal_type
     }
 ```
 
