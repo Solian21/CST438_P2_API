@@ -77,10 +77,17 @@ Mark each endpoint `public`, `user`, or `admin`. Mark which collection paginates
 filters or sorts.
 
 ## 5. Technical choices
-- **Database host:** (Neon, Supabase, Railway, Atlas, ...) and why
-- **OAuth2 provider:** (Google, GitHub, Auth0) and confirmation that it supports Authorization Code + PKCE from a native app
-- **Repo layout:** monorepo or split, and why
-These become your ADRs later.
+- **Database host:** Neon (serverless PostgreSQL). Our data is relational (users, recipes,
+  ingredients, meal plans, and join tables with foreign keys), so PostgreSQL fits better
+  than a document store. Neon's free tier is enough for a class project, and every team
+  member can connect to the same hosted database without running it locally.
+- **OAuth2 provider:** Google. Google supports the Authorization Code flow with PKCE for
+  native apps, which is what the Android app needs, and every user already has a Google
+  account. The API acts as a resource server, validates the Google-issued token, and maps
+  the token's subject ID to a User row.
+- **Repo layout:** Split repos. This repo holds only the API, and the Android app lives in
+  its own repo. The two are built, deployed, and tested independently and share only the
+  OpenAPI contract (`docs/openapi.yaml`), so each team can work without blocking the other.
 
 ## 6. Risks
 The two things most likely to go wrong, and what you will do first to find out.
