@@ -71,7 +71,29 @@ erDiagram
 ## 4. Endpoints
 | Verb | Path | Auth | Purpose |
 |---|---|---|---|
-| GET | /api/v1/workouts?page=0&size=20 | user | list my workouts (paginated) |
+| GET | /api/v1/recipes?page=0&size=20&sort=name,asc | user | List available recipes. Paginated and sortable by name or creation date. |
+| POST | /api/v1/recipes | user | create a recipe with ingredients|
+| GET | /api/v1/recipes/{recipeId} | user | view one recipe |
+| PUT | /api/v1/recipes/{recipeId} | user | fully replace a recipe |
+| PATCH | /api/v1/recipes/{recipeId} | user | partially update a recipe |
+| DELETE | /api/v1/recipes/{recipeId} | user | delete a recipe |
+|  GET | /api/v1/ingredients?page=0&size=20 | public | Browse ingredients, paginated. |
+| POST | /api/v1/ingredients | user | Add a new ingredient. |
+| GET | /api/v1/users/me | user | View the signed-in user's account. |
+| DELETE | /api/v1/users/me | user | Delete the signed-in user's account and data. |
+| GET | /api/v1/users?page=0&size=20 | admin | List all users, paginated. |
+| GET | /api/v1/users/{userId} | admin | View one user. |
+| PATCH | /api/v1/users/{userId} | admin | Grant or revoke the admin role. |
+| DELETE | /api/v1/users/{userId} | admin | Delete a user and their data. |
+| GET | /api/v1/meal_plans?page=0&size=20 | user | List the user's meal plans, paginated. |
+| POST | /api/v1/meal_plans | user | Create a weekly meal plan. |
+| GET | /api/v1/meal_plans/{mealPlanId} | user | View a meal plan and its entries. |
+| PATCH | /api/v1/meal_plans/{mealPlanId} | user | Update a meal plan. |
+| DELETE | /api/v1/meal_plans/{mealPlanId} | user | Delete a meal plan and its entries. |
+| GET | /api/v1/meal_plans/{mealPlanId}/entries | user | List meals scheduled in a meal plan. |
+| POST | /api/v1/meal_plans/{mealPlanId}/entries | user | Add a recipe to a meal plan. |
+| PATCH | /api/v1/meal_plans/{mealPlanId}/entries/{entryId} | user | Update a scheduled meal. |
+| DELETE | /api/v1/meal_plans/{mealPlanId}/entries/{entryId} | user | Remove a scheduled meal. |
 | ... | ... | ... | ... |
 Mark each endpoint `public`, `user`, or `admin`. Mark which collection paginates and which
 filters or sorts.
