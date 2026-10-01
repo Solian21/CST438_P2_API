@@ -405,6 +405,25 @@ components:
         type: integer
         format: int64
         example: 42
+        
+    MealPlanId:
+      name: mealPlanId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        example: 67
+    
+    EntryId:
+      name: entryId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        example: 54
+        
     Page:
       name: page
       in: query
@@ -413,6 +432,7 @@ components:
         type: integer
         minimum: 0
         default: 0
+        
     Size:
       name: size
       in: query
@@ -425,7 +445,7 @@ components:
 
 
   schemas:
-    MealPlan:
+        MealPlan:
       type: object
       required: [id, weekStart, entries]
       properties:
@@ -442,8 +462,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MealPlanEntry'
-
-
+    
     MealPlanEntry:
       type: object
       required: [id, mealPlanId, recipeId, plannedDate, mealType]
@@ -469,9 +488,10 @@ components:
         mealType:
           type: string
           enum: [BREAKFAST, LUNCH, DINNER]
+          example: DINNER
     
     MealPlanCreate:
-      description: Body for POST and PUT. PUT replaces every field.
+      description: Body for POST. Creates a weekly meal plan that may start with no entries.
       type: object
       required: [weekStart]
       properties:
@@ -479,6 +499,52 @@ components:
           type: string
           format: date
           example: "2026-10-05"
+
+    MealPlanPatch:
+      description: Body for PATCH. Send only the fields you want to change.
+      type: object
+      minProperties: 1
+      properties:
+        weekStart:
+          type: string
+          format: date 
+          example: "2020-12-04"
+
+    MealPlanEntryCreate:
+      description: Body for POST. Adds a recipe to a meal plan.
+      type: object
+      required: [recipeId, plannedDate, mealType]
+      properties:
+        recipeId:
+          type: integer
+          format: int64
+          example: 57
+        plannedDate: 
+          type: string
+          format: date
+          example: "2023-02-10"
+        mealType:
+          type: string
+          enum: [BREAKFAST, LUNCH, DINNER]
+          example: LUNCH
+
+    MealPlanEntryPatch:
+      description: Body for PATCH. Send only the fields you want to change.
+      type: object
+      minProperties: 1
+      properties:
+        recipeId:
+          type: integer
+          format: int64
+          example: 57
+        plannedDate:
+          type: string
+          format: date
+          example: "2026-10-02"
+        mealType:
+          type: string
+          enum: [BREAKFAST, LUNCH, DINNER]
+          example: LUNCH
 
 
     Recipe:
