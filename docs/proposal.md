@@ -83,7 +83,8 @@ filters or sorts.
 These become your ADRs later.
 
 ## 6. Risks
-The two things most likely to go wrong, and what you will do first to find out.
+- One risk is that deleting or changing one of the objects could affect how another object acts, like deleting an ingredient in recipes. What we will do first to find out is to test how the API handles deletions or changes.
+- Another risk is that a user could try to edit or view another user's mealplan or edit a lot of things on the API at once. What we could do to find out is to test what are the limits of a single user and figure out a workaround if an issue shows up.
 
 ## 7. Team and Sprint 1
 Who owns what in Sprint 1. Link your Project board and Sprint 1 milestone.
