@@ -6,7 +6,7 @@ The Recipe and Meal Planner API allows users of our app to create, organize, and
 ## 2. Resources
 | Resource | Key fields | Relationships |
 |---|---|---|
-| Users | id, email, displayName, role | A User can own many Recipes and MealPlans. An ADMIN User can manage other Users. |
+| Users | id, email, oauthSub, displayName, role | A User can own many Recipes and MealPlans. An ADMIN User can manage other Users. |
 | Recipes | id, name, measurements, instructions | A Recipe can use many Ingredients and can appear in many MealPlanEntries. |
 | Ingredients | id, ingredientName | An Ingredient can be used by many Recipes. |
 | MealPlans | id, weekStart | A User owns many MealPlans. A MealPlan has many MealPlanEntries. |
@@ -30,6 +30,7 @@ erDiagram
     USER {
         bigint id PK
         string email UK
+        string oauth_sub UK
         string display_name
         string role
     }
