@@ -1,3 +1,15 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: api
+  datasource:
+      url: ${DATABASE_URL}
+      username: ${DB_USER}
+      password: ${DB_PASS}
+      driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
