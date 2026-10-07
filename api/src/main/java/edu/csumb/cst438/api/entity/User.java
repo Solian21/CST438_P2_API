@@ -1,4 +1,4 @@
-package edu.csumb.cst438.api.model;
+package edu.csumb.cst438.api.entity;
 
 import jakarta.persistence.*;
 
