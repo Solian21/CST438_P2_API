@@ -37,6 +37,21 @@ git push -u origin docs/proposal
 gh pr create --fill
 ```
 
+## Run locally with Docker
+
+Starts the API on http://localhost:8080 and a local Postgres on port 5432 (dev only; the deployed API uses Neon):
+
+```bash
+docker compose up --build        # Ctrl+C to stop
+curl http://localhost:8080/actuator/health
+docker compose down              # add -v to wipe the local database
+```
+
+## Coverage
+
+`./gradlew check` (run in `api/`) fails if line coverage on `edu.csumb.cst438.api.service` is below 70%.
+The report is at `api/build/reports/jacoco/test/html/index.html`.
+
 ## Working with the contract
 
 No installs needed beyond Node (`npx` runs the tools).
