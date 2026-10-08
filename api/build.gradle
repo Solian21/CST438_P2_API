@@ -33,5 +33,16 @@ dependencies {
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+	useJUnitPlatform {
+		excludeTags 'neon'
+	}
+}
+
+// change test in run config to dbtest or run ./gradlew dbtest
+tasks.register('dbtest', Test) {
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'neon'
+	}
 }

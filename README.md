@@ -47,12 +47,9 @@ npx @redocly/cli lint docs/openapi.yaml
 
 # Mock server: a fake API built from the contract, at http://127.0.0.1:4010
 npx @stoplight/prism-cli mock docs/openapi.yaml
-
-curl -H "Authorization: Bearer x" "http://127.0.0.1:4010/api/v1/workouts?page=0&size=20"
-curl -i http://127.0.0.1:4010/api/v1/workouts          # 401: no token
-curl -H "Authorization: Bearer x" -H "Prefer: code=404" \
-     http://127.0.0.1:4010/api/v1/workouts/42          # force an error response
 ```
+The Prism mock server runs at http://127.0.0.1:4010
+
 
 The mock **validates** your requests and returns the `example:` values from the contract.
 **Nothing is saved**: a POST followed by a GET returns the example, not what you posted. The
@@ -67,3 +64,17 @@ To see the contract rendered, paste `docs/openapi.yaml` into https://editor.swag
 - Prism: https://docs.stoplight.io/docs/prism
 - Mermaid ER diagrams: https://mermaid.js.org/syntax/entityRelationshipDiagram.html
 - RFC 9457 Problem Details: https://www.rfc-editor.org/rfc/rfc9457
+
+## Project Technologies
+- Spring Boot/Java: backend API
+- Neon PostgreSQL: shared database
+- Kotlin: Android frontend
+- Node.js/npx: OpenAPI linting and Prism mock server
+
+## Running the Spring Boot API
+1. Create an `.env` file inside the `api` folder:
+
+```properties
+DATABASE_URL=jdbc:postgresql://<neon-host>/neondb?sslmode=require&channelBinding=require
+DB_USER=neondb_owner
+DB_PASS=<your-neon-password>
