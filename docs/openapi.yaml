@@ -378,7 +378,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
         
-  /api/v1/meal_plans:
+  /api/v1/meal-plans:
     get:
       tags: [MealPlans]
       operationId: listMealPlans
@@ -429,7 +429,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/meal_plans/{mealPlanId}:
+  /api/v1/meal-plans/{mealPlanId}:
     parameters:
       - $ref: '#/components/parameters/MealPlanId'
     get:

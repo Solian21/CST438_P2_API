@@ -86,15 +86,15 @@ erDiagram
 | GET | /api/v1/users/{userId} | admin | View one user. |
 | PATCH | /api/v1/users/{userId} | admin | Grant or revoke the admin role. |
 | DELETE | /api/v1/users/{userId} | admin | Delete a user and their data. |
-| GET | /api/v1/meal_plans?page=0&size=20 | user | List the user's meal plans, paginated. |
-| POST | /api/v1/meal_plans | user | Create a weekly meal plan. |
-| GET | /api/v1/meal_plans/{mealPlanId} | user | View a meal plan and its entries. |
-| PATCH | /api/v1/meal_plans/{mealPlanId} | user | Update a meal plan. |
-| DELETE | /api/v1/meal_plans/{mealPlanId} | user | Delete a meal plan and its entries. |
-| GET | /api/v1/meal_plans/{mealPlanId}/entries | user | List meals scheduled in a meal plan. |
-| POST | /api/v1/meal_plans/{mealPlanId}/entries | user | Add a recipe to a meal plan. |
-| PATCH | /api/v1/meal_plans/{mealPlanId}/entries/{entryId} | user | Update a scheduled meal. |
-| DELETE | /api/v1/meal_plans/{mealPlanId}/entries/{entryId} | user | Remove a scheduled meal. |
+| GET | /api/v1/meal-plans?page=0&size=20 | user | List the user's meal plans, paginated. |
+| POST | /api/v1/meal-plans | user | Create a weekly meal plan. |
+| GET | /api/v1/meal-plans/{mealPlanId} | user | View a meal plan and its entries. |
+| PATCH | /api/v1/meal-plans/{mealPlanId} | user | Update a meal plan. |
+| DELETE | /api/v1/meal-plans/{mealPlanId} | user | Delete a meal plan and its entries. |
+| GET | /api/v1/meal-plans/{mealPlanId}/entries | user | List meals scheduled in a meal plan. |
+| POST | /api/v1/meal-plans/{mealPlanId}/entries | user | Add a recipe to a meal plan. |
+| PATCH | /api/v1/meal-plans/{mealPlanId}/entries/{entryId} | user | Update a scheduled meal. |
+| DELETE | /api/v1/meal-plans/{mealPlanId}/entries/{entryId} | user | Remove a scheduled meal. |
 | ... | ... | ... | ... |
 
 Mark each endpoint `public`, `user`, or `admin`. Mark which collection paginates and which
