@@ -1,0 +1,31 @@
+# Local development only: the deployed API uses Neon, not this database.
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: recipes
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d recipes"]
+      interval: 2s
+      retries: 15
+
+  api:
+    build: api
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/recipes
+      DB_USER: dev
+      DB_PASS: dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
