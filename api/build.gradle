@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'jacoco'
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -36,6 +37,25 @@ tasks.named('test') {
 	useJUnitPlatform {
 		excludeTags 'neon'
 	}
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestCoverageVerification {
+	dependsOn test
+	violationRules {
+		rule {
+			element = 'PACKAGE'
+			includes = ['edu.csumb.cst438.api.service*']
+			limit {
+				counter = 'LINE'
+				minimum = 0.70
+			}
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn jacocoTestCoverageVerification
 }
 
 // change test in run config to dbtest or run ./gradlew dbtest

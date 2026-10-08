@@ -18,7 +18,7 @@ jobs:
           distribution: temurin
           java-version: 25
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew test
+      - run: ./gradlew check
 
   lint-contract:
     runs-on: ubuntu-latest
