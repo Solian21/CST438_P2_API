@@ -1,6 +1,8 @@
 package edu.csumb.cst438.api.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,6 +14,8 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "recipes")
+@Getter
+@Setter
 public class Recipe {
 
     @Id
@@ -35,11 +39,7 @@ public class Recipe {
     @ManyToMany
     @JoinTable(
             name = "recipe_ingredients",
-
-            // Points to the recipe primary key in the join table.
             joinColumns = @JoinColumn(name = "recipe_id"),
-
-            // Points to the ingredient primary key in the join table.
             inverseJoinColumns = @JoinColumn(name = "ingredient_id")
     )
     private Set<Ingredient> ingredients = new HashSet<>();
@@ -61,86 +61,5 @@ public class Recipe {
         this.name = name;
         this.instructions = instructions;
         this.owner = owner;
-    }
-
-    /**
-     * Gets the recipe ID.
-     *
-     * @return the recipe ID
-     */
-    public Long getId() {
-        return id;
-    }
-
-    /**
-     * Gets the recipe name.
-     *
-     * @return the recipe name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Updates the recipe name.
-     *
-     * @param name the new recipe name
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Gets the recipe instructions.
-     *
-     * @return the recipe instructions
-     */
-    public String getInstructions() {
-        return instructions;
-    }
-
-    /**
-     * Updates the recipe instructions.
-     *
-     * @param instructions the new recipe instructions
-     */
-    public void setInstructions(String instructions) {
-        this.instructions = instructions;
-    }
-
-    /**
-     * Gets the user who owns the recipe.
-     *
-     * @return the recipe owner
-     */
-    public User getOwner() {
-        return owner;
-    }
-
-    /**
-     * Updates the recipe owner.
-     *
-     * @param owner the new recipe owner
-     */
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
-    /**
-     * Gets the ingredients used in the recipe.
-     *
-     * @return the recipe ingredients
-     */
-    public Set<Ingredient> getIngredients() {
-        return ingredients;
-    }
-
-    /**
-     * Replaces the ingredients used in the recipe.
-     *
-     * @param ingredients the new set of ingredients
-     */
-    public void setIngredients(Set<Ingredient> ingredients) {
-        this.ingredients = ingredients;
     }
 }
