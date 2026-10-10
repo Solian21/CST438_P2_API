@@ -3,14 +3,16 @@ package edu.csumb.cst438.api.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Represents a recipe created by a user.
+ * Represents either a prepopulated recipe or a recipe created by a user.
  *
- * A recipe belongs to one user and can contain many ingredients.
+ * A null owner means the recipe is prepopulated and shared.
  */
 @Entity
 @Table(name = "recipes")
@@ -28,14 +30,17 @@ public class Recipe {
     @Column(columnDefinition = "TEXT")
     private String instructions;
 
-    // Many recipes can belong to one user.
-    // The recipes table stores the user's ID in the user_id foreign key column.
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    /**
+     * Null owner means this is a prepopulated recipe.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "user_id", nullable = true)
     private User owner;
 
-    // Many recipes can contain many ingredients.
-    // A separate recipe_ingredients join table connects recipes and ingredients.
     @ManyToMany
     @JoinTable(
             name = "recipe_ingredients",
@@ -44,22 +49,23 @@ public class Recipe {
     )
     private Set<Ingredient> ingredients = new HashSet<>();
 
-    /**
-     * Protected constructor required by JPA.
-     */
     protected Recipe() {
     }
 
     /**
      * Creates a recipe.
-     *
-     * @param name the recipe name
-     * @param instructions the recipe preparation instructions
-     * @param owner the user who owns the recipe
+     * The owner may be null for prepopulated recipes.
      */
     public Recipe(String name, String instructions, User owner) {
         this.name = name;
         this.instructions = instructions;
         this.owner = owner;
+    }
+
+    /**
+     * Returns true when this is a prepopulated/shared recipe.
+     */
+    public boolean isPrepopulated() {
+        return owner == null;
     }
 }
