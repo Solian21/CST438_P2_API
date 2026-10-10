@@ -2,7 +2,6 @@ package edu.csumb.cst438.api.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
@@ -17,7 +16,6 @@ import java.util.Set;
 @Entity
 @Table(name = "recipes")
 @Getter
-@Setter
 public class Recipe {
 
     @Id
@@ -26,6 +24,9 @@ public class Recipe {
 
     @Column(nullable = false)
     private String name;
+
+    @Column
+    private String measurements;
 
     @Column(columnDefinition = "TEXT")
     private String instructions;
@@ -56,9 +57,46 @@ public class Recipe {
      * Creates a recipe.
      * The owner may be null for prepopulated recipes.
      */
-    public Recipe(String name, String instructions, User owner) {
+    public Recipe(String name, String measurements, String instructions, User owner) {
         this.name = name;
+        this.measurements = measurements;
         this.instructions = instructions;
+        if (owner != null) {
+            owner.addRecipe(this);
+        }
+    }
+
+    /** Creates a recipe without measurements for callers using the original constructor. */
+    public Recipe(String name, String instructions, User owner) {
+        this(name, null, instructions, owner);
+    }
+
+    public void updateDetails(String name, String measurements, String instructions) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Recipe name must not be blank");
+        }
+        this.name = name;
+        this.measurements = measurements;
+        this.instructions = instructions;
+    }
+
+    public void addIngredient(Ingredient ingredient) {
+        if (ingredient == null) {
+            throw new IllegalArgumentException("Ingredient must not be null");
+        }
+        if (ingredients.add(ingredient)) {
+            ingredient.addRecipe(this);
+        }
+    }
+
+    public void removeIngredient(Ingredient ingredient) {
+        if (ingredients.remove(ingredient)) {
+            ingredient.removeRecipe(this);
+        }
+    }
+
+    /** Called by User.addRecipe so the owning side cannot get out of sync. */
+    void setOwnerFromUser(User owner) {
         this.owner = owner;
     }
 
