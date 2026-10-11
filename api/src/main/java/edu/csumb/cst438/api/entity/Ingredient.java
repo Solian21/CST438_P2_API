@@ -2,6 +2,9 @@ package edu.csumb.cst438.api.entity;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name="ingredients")
 public class Ingredient {
@@ -12,6 +15,9 @@ public class Ingredient {
 
     @Column(name="ingredient_name", nullable = false, unique = true)
     private String ingredientName;
+
+    @ManyToMany(mappedBy = "ingredients")
+    private Set<Recipe> recipes = new HashSet<>();
 
     protected Ingredient() {}
 
@@ -30,5 +36,15 @@ public class Ingredient {
         this.ingredientName = ingredientName;
     }
 
-    //TODO: add recipe relationships
+    public Set<Recipe> getRecipes() {
+        return recipes;
+    }
+
+    void addRecipe(Recipe recipe) {
+        recipes.add(recipe);
+    }
+
+    void removeRecipe(Recipe recipe) {
+        recipes.remove(recipe);
+    }
 }
