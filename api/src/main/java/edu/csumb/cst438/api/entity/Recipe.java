@@ -5,7 +5,9 @@ import lombok.Getter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,6 +51,13 @@ public class Recipe {
             inverseJoinColumns = @JoinColumn(name = "ingredient_id")
     )
     private Set<Ingredient> ingredients = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "recipe",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
+    private List<MealPlanEntry> mealPlanEntries = new ArrayList<>();
 
     protected Recipe() {
     }
@@ -126,5 +135,47 @@ public class Recipe {
      */
     public boolean isPrepopulated() {
         return owner == null;
+    }
+
+    /**
+     * Adds a meal plan entry to the collection and synchronizes the recipe's meal plan entry collection
+     *
+     * @param mealPlanEntry Added meal plan entry
+     * @throws IllegalArgumentException if the meal plan entry is null
+     * @throws IllegalStateException if the meal plan entry has a different recipe
+     */
+    public void addMealPlanEntry(MealPlanEntry mealPlanEntry){
+        if(mealPlanEntry == null){
+            throw new IllegalArgumentException("Meal plan entry must not be null.");
+        }
+        if(mealPlanEntry.getRecipe() != null && mealPlanEntry.getRecipe() != this){
+            throw new IllegalStateException("A meal plan entry cannot be transferred between recipes.");
+        }
+        mealPlanEntries.add(mealPlanEntry);
+        mealPlanEntry.setEntryFromRecipe(this);
+    }
+
+    /**
+     * Removes a meal plan's entry by removing it from the collection.
+     * Because of orphanRemoval, this also removes the meal plan entry row on the database.
+     *
+     * @param mealPlanEntry meal plan entry to be removed
+     * @throws IllegalArgumentException if the entry doesn't belong to this meal plan or if the entry is null
+     */
+    public void removeMealPlanEntry(MealPlanEntry mealPlanEntry){
+        if(mealPlanEntry == null || mealPlanEntry.getRecipe() != this){
+            throw new IllegalArgumentException("Meal plan entry does not have this recipe.");
+        }
+        mealPlanEntries.remove(mealPlanEntry);
+    }
+
+    /**
+     * This makes sure that if an entry is deleted from mealplan, it is also deleted here
+     */
+    @PreRemove
+    private void detachUnsyncedEntries(){
+        for(MealPlanEntry entry : mealPlanEntries){
+            entry.getMeal_plan().getMealPlanEntries().remove(entry);
+        }
     }
 }
