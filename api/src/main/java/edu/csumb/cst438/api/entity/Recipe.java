@@ -71,6 +71,14 @@ public class Recipe {
         this(name, null, instructions, owner);
     }
 
+    /**
+     * Updates this recipe's name, measurements, and instructions.
+     *
+     * @param name the new recipe name; must not be null or blank
+     * @param measurements the new ingredient measurements, or null if not provided
+     * @param instructions the new preparation instructions, or null if not provided
+     * @throws IllegalArgumentException if name is null or blank
+     */
     public void updateDetails(String name, String measurements, String instructions) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Recipe name must not be blank");
@@ -80,6 +88,13 @@ public class Recipe {
         this.instructions = instructions;
     }
 
+    /**
+     * Adds an ingredient to this recipe and synchronizes the ingredient's
+     * recipe collection.
+     *
+     * @param ingredient the ingredient to add
+     * @throws IllegalArgumentException if ingredient is null
+     */
     public void addIngredient(Ingredient ingredient) {
         if (ingredient == null) {
             throw new IllegalArgumentException("Ingredient must not be null");
@@ -89,6 +104,12 @@ public class Recipe {
         }
     }
 
+    /**
+     * Removes an ingredient from this recipe and synchronizes the ingredient's
+     * recipe collection.
+     *
+     * @param ingredient the ingredient to remove
+     */
     public void removeIngredient(Ingredient ingredient) {
         if (ingredients.remove(ingredient)) {
             ingredient.removeRecipe(this);

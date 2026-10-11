@@ -60,4 +60,18 @@ public class User {
         recipes.add(recipe);
         recipe.setOwnerFromUser(this);
     }
+
+    /**
+     * Deletes one of this user's recipes by removing it from the collection.
+     * With orphanRemoval enabled, this removes the recipe row from the database.
+     *
+     * @param recipe the recipe to remove
+     * @throws IllegalArgumentException if the recipe is null or belongs to another user
+     */
+    public void removeRecipe(Recipe recipe) {
+        if (recipe == null || recipe.getOwner() != this) {
+            throw new IllegalArgumentException("Recipe does not belong to this user");
+        }
+        recipes.remove(recipe);
+    }
 }
