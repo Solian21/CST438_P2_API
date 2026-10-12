@@ -1,9 +1,6 @@
 package edu.csumb.cst438.api;
 
-import edu.csumb.cst438.api.entity.MealPlan;
-import edu.csumb.cst438.api.entity.MealPlanEntry;
-import edu.csumb.cst438.api.entity.Recipe;
-import edu.csumb.cst438.api.entity.User;
+import edu.csumb.cst438.api.entity.*;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,17 +29,17 @@ public class MealPlanEntryPersistenceTest {
         entityManager.persist(mealPlan);
         entityManager.persist(recipe);
 
-        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), "Dinner");
+        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), mealType.DINNER);
         entityManager.flush();
         Long entryId = mealPlanEntry.getId();
         entityManager.clear();
 
         MealPlanEntry reload = entityManager.find(MealPlanEntry.class, entryId);
 
-        assertThat(reload.getMeal_plan().getOwner().getEmail().equals("owner@example.com"));
-        assertThat(reload.getMeal_plan().getWeek_start().equals(LocalDate.of(2026, 10, 10)));
-        assertThat(reload.getRecipe().getName().equals("Pizza"));
-        assertThat(reload.getMeal_type().equals("Dinner"));
+        assertThat(reload.getMealPlan().getOwner().getEmail()).isEqualTo("owner@example.com");
+        assertThat(reload.getMealPlan().getWeekStart()).isEqualTo(LocalDate.of(2026, 10, 10));
+        assertThat(reload.getRecipe().getName()).isEqualTo("Pizza");
+        assertThat(reload.getMealType()).isEqualTo(mealType.DINNER);
     }
 
     /**
@@ -57,10 +54,10 @@ public class MealPlanEntryPersistenceTest {
         entityManager.persist(mealPlan);
         entityManager.persist(recipe);
 
-        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), "Dinner");
+        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), mealType.DINNER);
         entityManager.flush();
 
-        owner.getMealPlans().remove(mealPlan);
+        owner.removeMealPlan(mealPlan);
         entityManager.remove(mealPlan);
         entityManager.flush();
         entityManager.clear();
@@ -80,7 +77,7 @@ public class MealPlanEntryPersistenceTest {
         entityManager.persist(mealPlan);
         entityManager.persist(recipe);
 
-        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), "Dinner");
+        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), mealType.DINNER);
         entityManager.flush();
 
         entityManager.remove(recipe);

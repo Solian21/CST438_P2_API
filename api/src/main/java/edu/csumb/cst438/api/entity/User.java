@@ -3,10 +3,7 @@ package edu.csumb.cst438.api.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents a user of the recipe application.
@@ -60,7 +57,7 @@ public class User {
     }
 
     /**
-     * Adds a recipe plan to the collection and synchronizes the user's recipe collection
+     * Adds a recipe to the collection and synchronizes the user's recipe collection
      *
      * @param recipe recipe to be added
      * @throws IllegalArgumentException if the recipe is null
@@ -121,5 +118,13 @@ public class User {
             throw new IllegalArgumentException("Meal plan does not belong to this user");
         }
         mealPlans.remove(mealPlan);
+    }
+
+    /**
+     * When getMealPlans() is called, the caller should not be able to modify the list
+     * @return mealPlans list for the user
+     */
+    public List<MealPlan> getMealPlans() {
+        return mealPlans != null ? Collections.unmodifiableList(mealPlans) : Collections.emptyList();
     }
 }

@@ -54,8 +54,7 @@ public class Recipe {
 
     @OneToMany(
             mappedBy = "recipe",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true
+            cascade = CascadeType.REMOVE
     )
     private List<MealPlanEntry> mealPlanEntries = new ArrayList<>();
 
@@ -160,7 +159,7 @@ public class Recipe {
      * Because of orphanRemoval, this also removes the meal plan entry row on the database.
      *
      * @param mealPlanEntry meal plan entry to be removed
-     * @throws IllegalArgumentException if the entry doesn't belong to this meal plan or if the entry is null
+     * @throws IllegalArgumentException if the entry doesn't belong to this recipe or if the entry is null
      */
     public void removeMealPlanEntry(MealPlanEntry mealPlanEntry){
         if(mealPlanEntry == null || mealPlanEntry.getRecipe() != this){
@@ -175,7 +174,7 @@ public class Recipe {
     @PreRemove
     private void detachUnsyncedEntries(){
         for(MealPlanEntry entry : mealPlanEntries){
-            entry.getMeal_plan().getMealPlanEntries().remove(entry);
+            entry.getMealPlan().getMealPlanEntries().remove(entry);
         }
     }
 }

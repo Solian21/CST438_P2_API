@@ -30,8 +30,8 @@ public class MealPlanPersistenceTest {
 
         MealPlan reload = entityManager.find(MealPlan.class, mealId);
 
-        assertThat(reload.getOwner().getEmail().equals("owner@example.com"));
-        assertThat(reload.getWeek_start().equals(LocalDate.of(2026, 10, 10)));
+        assertThat(reload.getOwner().getEmail()).isEqualTo("owner@example.com");
+        assertThat(reload.getWeekStart()).isEqualTo(LocalDate.of(2026, 10, 10));
     }
 
     /**

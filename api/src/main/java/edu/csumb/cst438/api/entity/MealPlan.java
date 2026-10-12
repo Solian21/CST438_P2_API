@@ -20,19 +20,19 @@ public class MealPlan {
     private Long id;
 
     // I'm assuming meal plans need to be connected to a user.
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User owner;
 
     @OneToMany(
-            mappedBy = "meal_plan",
+            mappedBy = "mealPlan",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<MealPlanEntry> mealPlanEntries = new ArrayList<>();
 
-    @Column(nullable = false)
-    private LocalDate week_start;
+    @Column(nullable = false, name = "week_start")
+    private LocalDate weekStart;
 
     protected MealPlan(){}
 
@@ -41,14 +41,14 @@ public class MealPlan {
      *
      * @param owner the owner/creator of the meal plan
      * @param week_start the week that the meal plan starts, cannot be null
-     * @throws IllegalArgumentException if there is no owner
+     * @throws IllegalArgumentException if there is no owner or week start
      */
     public MealPlan(User owner, LocalDate week_start){
-        if(owner == null){
-            throw new IllegalArgumentException("Meal plans must have an owner.");
+        if(owner == null || week_start == null){
+            throw new IllegalArgumentException("Meal plans must have an owner and a starting weed.");
         }
         owner.addMealPlan(this);
-        this.week_start = week_start;
+        weekStart = week_start;
     }
 
     /**
@@ -62,7 +62,7 @@ public class MealPlan {
         if(mealPlanEntry == null){
             throw new IllegalArgumentException("Meal plan entry must not be null.");
         }
-        if(mealPlanEntry.getMeal_plan() != null && mealPlanEntry.getMeal_plan() != this){
+        if(mealPlanEntry.getMealPlan() != null && mealPlanEntry.getMealPlan() != this){
             throw new IllegalStateException("A meal plan entry cannot be transferred between meal plans.");
         }
         mealPlanEntries.add(mealPlanEntry);
@@ -77,14 +77,14 @@ public class MealPlan {
      * @throws IllegalArgumentException if the entry doesn't belong to this meal plan or if the entry is null
      */
     public void removeMealPlanEntry(MealPlanEntry mealPlanEntry){
-        if(mealPlanEntry == null || mealPlanEntry.getMeal_plan() != this){
+        if(mealPlanEntry == null || mealPlanEntry.getMealPlan() != this){
             throw new IllegalArgumentException("Meal plan entry does not belong to meal plan.");
         }
         mealPlanEntries.remove(mealPlanEntry);
     }
 
     /**
-     * Called by User.addRecipe so the owning side cannot get out of sync similar to the recipe table.
+     * Called by User.addMealPlan owning side cannot get out of sync similar to the recipe table.
      */
     void setOwnerFromUser(User owner) {
         this.owner = owner;
