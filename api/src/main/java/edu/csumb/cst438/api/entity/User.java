@@ -3,8 +3,7 @@ package edu.csumb.cst438.api.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents a user of the recipe application.
@@ -34,6 +33,13 @@ public class User {
     )
     private Set<Recipe> recipes = new HashSet<>();
 
+    @OneToMany(
+            mappedBy = "owner",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<MealPlan> mealPlans = new ArrayList<>();
+
     protected User() {
     }
 
@@ -50,6 +56,13 @@ public class User {
         this.role = role;
     }
 
+    /**
+     * Adds a recipe to the collection and synchronizes the user's recipe collection
+     *
+     * @param recipe recipe to be added
+     * @throws IllegalArgumentException if the recipe is null
+     * @throws IllegalStateException if the recipe doesn't belong to this user
+     */
     public void addRecipe(Recipe recipe) {
         if (recipe == null) {
             throw new IllegalArgumentException("Recipe must not be null");
@@ -59,6 +72,24 @@ public class User {
         }
         recipes.add(recipe);
         recipe.setOwnerFromUser(this);
+    }
+
+    /**
+     * Adds a meal plan to the collection and synchronizes the user's meal plan collection
+     *
+     * @param mealPlan meal plan to be added
+     * @throws IllegalArgumentException if the meal plan is null
+     * @throws IllegalStateException if the meal plan doesn't belong to this user
+     */
+    public void addMealPlan(MealPlan mealPlan){
+        if(mealPlan == null){
+            throw new IllegalArgumentException("Meal plan must not be null");
+        }
+        if(mealPlan.getOwner() != null && mealPlan.getOwner() != this){
+            throw new IllegalStateException("A meal plan cannot be transferred between owners");
+        }
+        mealPlans.add(mealPlan);
+        mealPlan.setOwnerFromUser(this);
     }
 
     /**
@@ -73,5 +104,27 @@ public class User {
             throw new IllegalArgumentException("Recipe does not belong to this user");
         }
         recipes.remove(recipe);
+    }
+
+    /**
+     * Removes a user's meal plan by removing it from the collection.
+     * Because orphanRemoval is enabled, it also removes meal plan row from the database, similar to recipes.
+     *
+     * @param mealPlan the meal plan to remove
+     * @throws IllegalArgumentException if the meal plan is null or doesn't belong to this user
+     */
+    public void removeMealPlan(MealPlan mealPlan){
+        if(mealPlan == null || mealPlan.getOwner() != this){
+            throw new IllegalArgumentException("Meal plan does not belong to this user");
+        }
+        mealPlans.remove(mealPlan);
+    }
+
+    /**
+     * When getMealPlans() is called, the caller should not be able to modify the list
+     * @return mealPlans list for the user
+     */
+    public List<MealPlan> getMealPlans() {
+        return mealPlans != null ? Collections.unmodifiableList(mealPlans) : Collections.emptyList();
     }
 }
