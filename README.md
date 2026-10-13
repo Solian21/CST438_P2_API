@@ -47,6 +47,12 @@ curl http://localhost:8080/actuator/health
 docker compose down              # add -v to wipe the local database
 ```
 
+Every merge to `main` publishes the image to GHCR, tagged `latest` and the commit SHA:
+
+```bash
+docker pull ghcr.io/solian21/cst438_p2_api:latest
+```
+
 ## Coverage
 
 `./gradlew check` (run in `api/`) fails if line coverage on `edu.csumb.cst438.api.service` is below 70%.
