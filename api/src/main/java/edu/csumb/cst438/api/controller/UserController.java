@@ -1,9 +1,13 @@
 package edu.csumb.cst438.api.controller;
 
 import edu.csumb.cst438.api.entity.User;
+import edu.csumb.cst438.api.record.UserResponseDTO;
 import edu.csumb.cst438.api.record.UserRoleUpdateRequest;
 import edu.csumb.cst438.api.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,9 +38,9 @@ public class UserController {
      * @return Ok with users unless the one calling it isn't an Admin
      */
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(@RequestParam(defaultValue = "0") int page){
-        List<User> users = userService.getAllUsers(page);
-        return ResponseEntity.ok(users);
+    public ResponseEntity<PagedModel<User>> getAllUsers(@RequestParam(defaultValue = "0") int page){
+        Page<User> users = userService.getAllUsers(page);
+        return ResponseEntity.ok(new PagedModel<>(users));
     }
 
     /**
@@ -45,9 +49,9 @@ public class UserController {
      * @return Ok with user unless the one calling it isn't an Admin
      */
     @GetMapping("/{userId}")
-    public ResponseEntity<User> getUserById(@PathVariable Long userId){
-        Optional<User> user = userService.getUserById(userId);
-        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long userId){
+        UserResponseDTO user = userService.getUserById(userId);
+        return ResponseEntity.ok(user);
     }
 
     /**
@@ -68,7 +72,7 @@ public class UserController {
      * @return Ok with user unless the one calling it isn't an Admin
      */
     @PatchMapping("/{userId}")
-    public ResponseEntity<User> patchUser(@PathVariable Long userId, @RequestBody UserRoleUpdateRequest request){
+    public ResponseEntity<User> patchUser(@PathVariable Long userId, @Valid @RequestBody UserRoleUpdateRequest request){
         User updatedUser = userService.patchUser(userId, request.role());
         return ResponseEntity.ok(updatedUser);
     }
@@ -80,8 +84,7 @@ public class UserController {
      */
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser(Principal principal){
-        String name = principal.getName();
-        User user = userService.getUserByName(name);
+        User user = userService.getUserByEmail(principal.getName());
         return ResponseEntity.ok(user);
     }
 
@@ -92,8 +95,7 @@ public class UserController {
      */
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteCurrentUser(Principal principal){
-        String name = principal.getName();
-        User user = userService.getUserByName(name);
+        User user = userService.getUserByEmail(principal.getName());
         userService.deleteUser(user.getId());
         return ResponseEntity.noContent().build();
     }

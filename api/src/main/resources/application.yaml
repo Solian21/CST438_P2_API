@@ -13,3 +13,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  data:
+    web:
+      pageable:
+        serialization-mode: via_dto

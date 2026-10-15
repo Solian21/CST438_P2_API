@@ -1,10 +1,12 @@
 package edu.csumb.cst438.api.service;
 
 import edu.csumb.cst438.api.entity.User;
+import edu.csumb.cst438.api.record.UserResponseDTO;
 import edu.csumb.cst438.api.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,7 +21,7 @@ import java.util.Optional;
  * Methods that are ran in the controller, does a lot of the work.
  */
 @Service
-public class UserService implements UserDetailsService {
+public class UserService {
     private final UserRepository userRepository;
 
     /**
@@ -31,31 +33,26 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * Should allow spring security to authenticate users based on our database
-     * @param username user display name
-     * @return user details
-     * @throws UsernameNotFoundException if user not found
+     * Gets user by email for future oauth stuff
+     * @param email user email
+     * @return the user
      */
-    @Override
-    public UserDetails loadUserByUsername(@NonNull String username) throws UsernameNotFoundException{
-        User user = userRepository.findByDisplayName(username)
-                .orElseThrow(() -> new UsernameNotFoundException("No user named " + username));
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getDisplayName())
-                .password(user.getEmail())
-                .roles(user.getRole())
-                .build();
+    public User getUserByEmail(String email){
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("No user found for the authenticated account"));
     }
 
     /**
      * Gives a list of all the users by page
      * @param page an int of page (starts at 0)
      * @return a list of users
+     * @throws IllegalArgumentException if page index isn't <= 0
      */
-    public List<User> getAllUsers(int page){
-        int size = 20;
-        Pageable pageable = PageRequest.of(page, size);
-        return userRepository.findUsersInPage(pageable);
+    public Page<User> getAllUsers(int page){
+        if (page < 0) {
+            throw new IllegalArgumentException("Page index must be 0 or greater");
+        }
+        return userRepository.findAll(PageRequest.of(page, 20));
     }
 
     /**
@@ -63,8 +60,14 @@ public class UserService implements UserDetailsService {
      * @param id the user ID
      * @return the user
      */
-    public Optional<User> getUserById(Long id){
-        return userRepository.findById(id);
+    public UserResponseDTO getUserById(Long id){
+        Optional<User> user = userRepository.findById(id);
+        return new UserResponseDTO(
+                user.get().getId(),
+                user.get().getEmail(),
+                user.get().getDisplayName(),
+                user.get().getRole()
+        );
     }
 
     /**
@@ -87,15 +90,5 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new EntityNotFoundException("No user found with id " + id));
         user.changeRole(role);
         return userRepository.save(user);
-    }
-
-    /**
-     * Gets user by display name
-     * @param name the display name
-     * @return the user
-     */
-    public User getUserByName(String name){
-        return userRepository.findByDisplayName(name)
-                .orElseThrow(() -> new EntityNotFoundException("No user named " + name));
     }
 }

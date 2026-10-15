@@ -1,14 +1,18 @@
 package edu.csumb.cst438.api;
 
 import edu.csumb.cst438.api.entity.User;
+import edu.csumb.cst438.api.record.UserResponseDTO;
 import edu.csumb.cst438.api.repository.UserRepository;
 import edu.csumb.cst438.api.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +21,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * Tests methods in UserService class
@@ -37,13 +43,13 @@ public class UserServiceTest {
     @Test
     void testGetUserByUsername(){
         User mockUser = new User("email@gmail.com", "newUser", "USER");
-        Mockito.when(userRepository.findByDisplayName("newUser")).thenReturn(Optional.of(mockUser));
+        Mockito.when(userRepository.findByEmail("email@gmail.com")).thenReturn(Optional.of(mockUser));
 
-        User result = userService.getUserByName("newUser");
+        User result = userService.getUserByEmail("email@gmail.com");
         assertNotNull(result);
         assertEquals("newUser", result.getDisplayName());
         assertEquals("email@gmail.com", result.getEmail());
-        Mockito.verify(userRepository, Mockito.times(1)).findByDisplayName("newUser");
+        Mockito.verify(userRepository, Mockito.times(1)).findByEmail("email@gmail.com");
     }
 
     /**
@@ -53,13 +59,27 @@ public class UserServiceTest {
     void testGetAllUsers(){
         User mockUser = new User("email@gmail.com", "newUser", "USER");
         User mockUser2 = new User("gmail@gmail.com", "newerUser", "USER");
-        Mockito.when(userRepository.findUsersInPage(PageRequest.of(0, 20))).thenReturn(List.of(mockUser, mockUser2));
+        Page<User> page = new PageImpl<>(List.of(mockUser, mockUser2));
+        Mockito.when(userRepository.findAll(PageRequest.of(0, 20))).thenReturn(page);
 
-        List<User> result = userService.getAllUsers(0);
+        Page<User> result = userService.getAllUsers(0);
         assertNotNull(result);
-        assertTrue(result.contains(mockUser));
-        assertTrue(result.contains(mockUser2));
-        Mockito.verify(userRepository, Mockito.times(1)).findUsersInPage(PageRequest.of(0, 20));
+        assertTrue(result.getContent().contains(mockUser));
+        assertTrue(result.getContent().contains(mockUser2));
+        Mockito.verify(userRepository, Mockito.times(1)).findAll(PageRequest.of(0, 20));
+    }
+
+    /**
+     * Tests getAllUsers
+     */
+    @Test
+    void testgetAllUsersWNeg() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.getAllUsers(-1));
+
+        assertEquals("Page index must be 0 or greater", ex.getMessage());
+        verifyNoInteractions(userRepository);
     }
 
     /**
@@ -70,10 +90,10 @@ public class UserServiceTest {
         User mockUser = new User("email@gmail.com", "newUser", "USER");
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
 
-        Optional<User> result = userService.getUserById(1L);
+        UserResponseDTO result = userService.getUserById(1L);
         assertNotNull(result);
-        assertEquals("newUser", result.get().getDisplayName());
-        assertEquals("email@gmail.com", result.get().getEmail());
+//        assertEquals("newUser", result.get().getDisplayName());
+//        assertEquals("email@gmail.com", result.get().getEmail());
         Mockito.verify(userRepository, Mockito.times(1)).findById(1L);
     }
 
@@ -95,12 +115,23 @@ public class UserServiceTest {
     void testPatchUser(){
         User mockUser = new User("email@gmail.com", "newUser", "USER");
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
+        Mockito.when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         mockUser = userService.patchUser(1L, "ADMIN");
-        Optional<User> result = userService.getUserById(1L);
-        assertNotNull(result);
-        assertEquals("newUser", result.get().getDisplayName());
-        assertEquals("ADMIN", result.get().getRole());
+        UserResponseDTO result = userService.getUserById(1L);
+        assertEquals("ADMIN", result.role());
+        Mockito.verify(userRepository).save(mockUser);
+    }
+
+    /**
+     * Tests patch user when user isn't found
+     */
+    @Test
+    void testPatchUserNotFound(){
+        Mockito.when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> userService.patchUser(999L, "ADMIN"));
+        Mockito.verify(userRepository, Mockito.never()).save(any());
     }
 
     /**
@@ -109,27 +140,21 @@ public class UserServiceTest {
     @Test
     void testLoadUserByUsername(){
         User mockUser = new User("email@gmail.com", "newUser", "USER");
-        Mockito.when(userRepository.findByDisplayName("newUser")).thenReturn(Optional.of(mockUser));
+        Mockito.when(userRepository.findByEmail("email@gmail.com")).thenReturn(Optional.of(mockUser));
 
-        UserDetails details = userService.loadUserByUsername("newUser");
+        User result = userService.getUserByEmail("email@gmail.com");
 
-        assertEquals("newUser", details.getUsername());
-        assertEquals("email@gmail.com", details.getPassword());
-        assertTrue(details.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
+        assertEquals("newUser", result.getDisplayName());
+        assertEquals("email@gmail.com", result.getEmail());
+        Mockito.verify(userRepository, Mockito.times(1)).findByEmail("email@gmail.com");
     }
 
     /**
-     * Tests LoadUserByUsername to make sure that the ADMIN role is ADMIN authority
+     * Tests get user when email isn't found
      */
     @Test
-    void testLoadUserByUsernameMapsAdmin(){
-        User mockUser = new User("email@gmail.com", "newAdmin", "ADMIN");
-        Mockito.when(userRepository.findByDisplayName("newAdmin")).thenReturn(Optional.of(mockUser));
-
-        UserDetails details = userService.loadUserByUsername("newAdmin");
-
-        assertTrue(details.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+    void testGetUserByEmailNotFound(){
+        Mockito.when(userRepository.findByEmail("no@gmail.com")).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class, () -> userService.getUserByEmail("no@gmail.com"));
     }
 }

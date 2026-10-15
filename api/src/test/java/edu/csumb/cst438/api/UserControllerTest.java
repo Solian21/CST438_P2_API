@@ -1,23 +1,28 @@
 package edu.csumb.cst438.api;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import edu.csumb.cst438.api.controller.UserController;
 import edu.csumb.cst438.api.entity.User;
+import edu.csumb.cst438.api.record.UserResponseDTO;
 import edu.csumb.cst438.api.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.With;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -42,8 +47,13 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGETUsersWAdmin() throws Exception{
+        User mockUser = new User("email@gmail.com", "newName", "USER");
+        when(userService.getAllUsers(0)).thenReturn(new PageImpl<>(List.of(mockUser)));
         mockMvc.perform(get("/api/v1/users"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].email").value("email@gmail.com"))
+                .andExpect(jsonPath("$.page.totalElements").value(1))
+                .andExpect(jsonPath("$.page.number").value(0));
     }
 
     /**
@@ -53,8 +63,8 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGETUserIdWAdmin() throws Exception{
-        User mockUser = new User("email@gmail.com", "newName", "USER");
-        when(userService.getUserById(1L)).thenReturn(Optional.of(mockUser));
+        UserResponseDTO mockUser = new UserResponseDTO(1L, "email@gmail.com", "newName", "USER");
+        when(userService.getUserById(1L)).thenReturn(mockUser);
         mockMvc.perform(get("/api/v1/users/1"))
                 .andExpect(status().isOk());
     }
@@ -77,14 +87,100 @@ public class UserControllerTest {
     }
 
     /**
+     * Tests PATCH if the user don't exist
+     * @throws Exception if there's an exception
+     */
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testPATCHNonExistentUser() throws Exception{
+        when(userService.patchUser(999L, "ADMIN"))
+                .thenThrow(new EntityNotFoundException("No user found with id 999"));
+        mockMvc.perform(patch("/api/v1/users/999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"ADMIN\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Not Found"))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.detail").value("No user found with id 999"))
+                .andExpect(jsonPath("$.instance").value("/api/v1/users/999"));
+    }
+
+    /**
+     * Tests PATCH user with an invalid role input
+     * @throws Exception if there is an exception
+     */
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testPATCHUserInvalidRole() throws Exception{
+        mockMvc.perform(patch("/api/v1/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"ADMN\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("role")));
+
+        verify(userService, never()).patchUser(any(), any());
+    }
+
+    /**
+     * Tests if PATCh works with a missing role input
+     * @throws Exception if there is an exception
+     */
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testPATCHUserMissingRole() throws Exception{
+        mockMvc.perform(patch("/api/v1/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400));
+
+        verify(userService, never()).patchUser(any(), any());
+    }
+
+    /**
+     * Tests if GET users works when you're not authenticated
+     * @throws Exception if there is an exception
+     */
+    @Test
+    void testGETUsersUnauthenticated() throws Exception{
+        mockMvc.perform(get("/api/v1/users"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(header().exists("WWW-Authenticate"))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.instance").value("/api/v1/users"));
+    }
+
+    /**
+     * Tests if GET users works if a user does it
+     * @throws Exception if there is an exception
+     */
+    @Test
+    @WithMockUser(roles = "USER")
+    void testGETUsersWUserProblemDetails() throws Exception{
+        mockMvc.perform(get("/api/v1/users"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Forbidden"))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.instance").value("/api/v1/users"));
+    }
+
+    /**
      * Tests if DELETE /api/v1/users/{userId} works with ADMIN role
      * @throws Exception if there is an exception
      */
     @Test
     @WithMockUser(roles = "ADMIN")
     void testDELETEUserIdWAdmin() throws Exception{
-        User mockUser = new User("email@gmail.com", "newName", "USER");
-        when(userService.getUserById(1L)).thenReturn(Optional.of(mockUser));
+        UserResponseDTO mockUser = new UserResponseDTO(1L, "email@gmail.com", "newName", "USER");
+        when(userService.getUserById(1L)).thenReturn(mockUser);
         mockMvc.perform(delete("/api/v1/users/1"))
                 .andExpect(status().isNoContent());
     }
@@ -97,7 +193,6 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void testGETUsersWUser() throws Exception{
-        User mockUser = new User("email@gmail.com", "newName", "USER");
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isForbidden());
     }
@@ -109,8 +204,8 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void testGETUserIdWUser() throws Exception{
-        User mockUser = new User("email@gmail.com", "newName", "USER");
-        when(userService.getUserById(1L)).thenReturn(Optional.of(mockUser));
+        UserResponseDTO mockUser = new UserResponseDTO(1L, "email@gmail.com", "newName", "USER");
+        when(userService.getUserById(1L)).thenReturn(mockUser);
         mockMvc.perform(get("/api/v1/users/1"))
                 .andExpect(status().isForbidden());
     }
@@ -138,8 +233,8 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void testDELETEUserIdWUser() throws Exception{
-        User mockUser = new User("email@gmail.com", "newName", "USER");
-        when(userService.getUserById(1L)).thenReturn(Optional.of(mockUser));
+        UserResponseDTO mockUser = new UserResponseDTO(1L, "email@gmail.com", "newName", "USER");
+        when(userService.getUserById(1L)).thenReturn(mockUser);
         mockMvc.perform(delete("/api/v1/users/1"))
                 .andExpect(status().isForbidden());
     }
@@ -149,10 +244,10 @@ public class UserControllerTest {
      * @throws Exception if there is an exception
      */
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "email@gmail.com", roles = "USER")
     void testGETLoggedInUser() throws Exception{
         User mockUser = new User("email@gmail.com", "user", "USER");
-        when(userService.getUserByName("user")).thenReturn(mockUser);
+        when(userService.getUserByEmail("email@gmail.com")).thenReturn(mockUser);
         mockMvc.perform(get("/api/v1/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("email@gmail.com"));
@@ -163,11 +258,13 @@ public class UserControllerTest {
      * @throws Exception if there is an exception
      */
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "email@gmail.com", roles = "USER")
     void testDELETELoggedInUser() throws Exception{
-        User mockUser = new User("email@gmail.com", "user", "USER");
-        when(userService.getUserByName("user")).thenReturn(mockUser);
+        User mockUser = mock(User.class);
+        when(mockUser.getId()).thenReturn(1L);
+        when(userService.getUserByEmail("email@gmail.com")).thenReturn(mockUser);
         mockMvc.perform(delete("/api/v1/users/me"))
                 .andExpect(status().isNoContent());
+        verify(userService).deleteUser(1L);
     }
 }
