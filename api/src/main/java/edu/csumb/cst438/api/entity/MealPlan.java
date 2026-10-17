@@ -84,6 +84,19 @@ public class MealPlan {
     }
 
     /**
+     * Moves this meal plan to a different week. Entries are left unchanged.
+     *
+     * @param weekStart the new week start, cannot be null
+     * @throws IllegalArgumentException if weekStart is null
+     */
+    public void changeWeekStart(LocalDate weekStart){
+        if(weekStart == null){
+            throw new IllegalArgumentException("Meal plans must have a starting week.");
+        }
+        this.weekStart = weekStart;
+    }
+
+    /**
      * Called by User.addMealPlan owning side cannot get out of sync similar to the recipe table.
      */
     void setOwnerFromUser(User owner) {
