@@ -3,6 +3,9 @@ spring:
     import: optional:file:.env[.properties]
   application:
     name: api
+  mvc:
+    problemdetails:
+      enabled: true
   datasource:
       url: ${DATABASE_URL}
       username: ${DB_USER}
@@ -12,6 +15,9 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
     show-sql: true
   data:
     web:
