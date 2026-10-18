@@ -31,11 +31,12 @@ public class UserController {
     /**
      * Call for multiple users on a single page
      * @param page What page number the admin goes to (starts at 0)
+     * @param size What page number the admin goes to (starts at 0)
      * @return Ok with users unless the one calling it isn't an Admin
      */
     @GetMapping
-    public ResponseEntity<PagedModel<UserResponseDTO>> getAllUsers(@RequestParam(defaultValue = "0") int page){
-        Page<UserResponseDTO> users = userService.getAllUsers(page);
+    public ResponseEntity<PagedModel<UserResponseDTO>> getAllUsers(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size){
+        Page<UserResponseDTO> users = userService.getAllUsers(page, size);
         return ResponseEntity.ok(new PagedModel<>(users));
     }
 

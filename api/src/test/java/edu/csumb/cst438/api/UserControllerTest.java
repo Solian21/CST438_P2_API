@@ -46,7 +46,7 @@ public class UserControllerTest {
     @WithMockUser(roles = "ADMIN")
     void testGETUsersWAdmin() throws Exception{
         UserResponseDTO mockUser = new UserResponseDTO(1L, "email@gmail.com", "newName", "USER");
-        when(userService.getAllUsers(0)).thenReturn(new PageImpl<>(List.of(mockUser)));
+        when(userService.getAllUsers(0, 20)).thenReturn(new PageImpl<>(List.of(mockUser)));
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].email").value("email@gmail.com"))

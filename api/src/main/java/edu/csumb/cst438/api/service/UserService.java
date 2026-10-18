@@ -43,14 +43,18 @@ public class UserService {
     /**
      * Gives a list of all the users by page
      * @param page an int of page (starts at 0)
+     * @param size an int of size (default is 20)
      * @return a list of users
      * @throws IllegalArgumentException if page index is < 0
      */
-    public Page<UserResponseDTO> getAllUsers(int page){
+    public Page<UserResponseDTO> getAllUsers(int page, int size){
         if (page < 0) {
             throw new IllegalArgumentException("Page index must be 0 or greater");
         }
-        return userRepository.findAll(PageRequest.of(page, 20))
+        if (size < 1 || size > 100){
+            throw new IllegalArgumentException("Page size must be between 1 and 100");
+        }
+        return userRepository.findAll(PageRequest.of(page, size))
                 .map(user -> new UserResponseDTO(
                         user.getId(),
                         user.getEmail(),
@@ -81,6 +85,8 @@ public class UserService {
      * @param id the user ID
      */
     public void deleteUser(Long id){
+        userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("No user found with id " + id));
         userRepository.deleteById(id);
     }
 

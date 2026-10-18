@@ -58,26 +58,52 @@ public class UserServiceTest {
         User mockUser = new User("email@gmail.com", "newUser", "USER");
         User mockUser2 = new User("gmail@gmail.com", "newerUser", "USER");
         Page<User> page = new PageImpl<>(List.of(mockUser, mockUser2));
-        Mockito.when(userRepository.findAll(PageRequest.of(0, 20))).thenReturn(page);
+        Mockito.when(userRepository.findAll(PageRequest.of(0, 2))).thenReturn(page);
 
-        Page<UserResponseDTO> result = userService.getAllUsers(0);
+        Page<UserResponseDTO> result = userService.getAllUsers(0, 2);
 
         assertEquals(2, result.getTotalElements());
         assertEquals("email@gmail.com", result.getContent().get(0).email());
         assertEquals("gmail@gmail.com", result.getContent().get(1).email());
-        Mockito.verify(userRepository, Mockito.times(1)).findAll(PageRequest.of(0, 20));
+        Mockito.verify(userRepository, Mockito.times(1)).findAll(PageRequest.of(0, 2));
     }
 
     /**
-     * Tests getAllUsers
+     * Tests getAllUsers with negative page
      */
     @Test
     void testgetAllUsersWNeg() {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userService.getAllUsers(-1));
+                () -> userService.getAllUsers(-1, 20));
 
         assertEquals("Page index must be 0 or greater", ex.getMessage());
+        verifyNoInteractions(userRepository);
+    }
+
+    /**
+     * Tests getAllUsers with negative size
+     */
+    @Test
+    void testgetAllUsersWNegSize() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.getAllUsers(0, -1));
+
+        assertEquals("Page size must be between 1 and 100", ex.getMessage());
+        verifyNoInteractions(userRepository);
+    }
+
+    /**
+     * Tests getAllUsers with size over 100
+     */
+    @Test
+    void testgetAllUsersWBigSize() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.getAllUsers(0, 101));
+
+        assertEquals("Page size must be between 1 and 100", ex.getMessage());
         verifyNoInteractions(userRepository);
     }
 
@@ -127,6 +153,8 @@ public class UserServiceTest {
      */
     @Test
     void testDeleteUserById(){
+        User mockUser = new User("email@gmail.com", "newUser", "USER");
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
         userService.deleteUser(1L);
         Mockito.verify(userRepository, Mockito.times(1)).deleteById(1L);
     }
