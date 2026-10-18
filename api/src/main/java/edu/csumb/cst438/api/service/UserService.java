@@ -5,17 +5,9 @@ import edu.csumb.cst438.api.record.UserResponseDTO;
 import edu.csumb.cst438.api.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Methods that are ran in the controller, does a lot of the work.
@@ -37,22 +29,34 @@ public class UserService {
      * @param email user email
      * @return the user
      */
-    public User getUserByEmail(String email){
-        return userRepository.findByEmail(email)
+    public UserResponseDTO getUserByEmail(String email){
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("No user found for the authenticated account"));
+        return new UserResponseDTO(
+                user.getId(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getRole()
+        );
     }
 
     /**
      * Gives a list of all the users by page
      * @param page an int of page (starts at 0)
      * @return a list of users
-     * @throws IllegalArgumentException if page index isn't <= 0
+     * @throws IllegalArgumentException if page index is < 0
      */
-    public Page<User> getAllUsers(int page){
+    public Page<UserResponseDTO> getAllUsers(int page){
         if (page < 0) {
             throw new IllegalArgumentException("Page index must be 0 or greater");
         }
-        return userRepository.findAll(PageRequest.of(page, 20));
+        return userRepository.findAll(PageRequest.of(page, 20))
+                .map(user -> new UserResponseDTO(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getDisplayName(),
+                        user.getRole()
+                ));
     }
 
     /**
@@ -61,12 +65,14 @@ public class UserService {
      * @return the user
      */
     public UserResponseDTO getUserById(Long id){
-        Optional<User> user = userRepository.findById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("No user found with id " + id));
         return new UserResponseDTO(
-                user.get().getId(),
-                user.get().getEmail(),
-                user.get().getDisplayName(),
-                user.get().getRole()
+                user.getId(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getRole()
         );
     }
 
@@ -85,10 +91,15 @@ public class UserService {
      * @return the updated user
      */
     @Transactional
-    public User patchUser(Long id, String role){
+    public UserResponseDTO patchUser(Long id, String role){
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("No user found with id " + id));
         user.changeRole(role);
-        return userRepository.save(user);
+        return new UserResponseDTO(
+                user.getId(),
+                user.getEmail(),
+                user.getDisplayName(),
+                user.getRole()
+        );
     }
 }

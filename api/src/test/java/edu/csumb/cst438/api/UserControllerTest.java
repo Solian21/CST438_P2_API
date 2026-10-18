@@ -10,7 +10,6 @@ import edu.csumb.cst438.api.entity.User;
 import edu.csumb.cst438.api.record.UserResponseDTO;
 import edu.csumb.cst438.api.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.With;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -23,7 +22,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Tests the UserController.java API routes
@@ -47,7 +45,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGETUsersWAdmin() throws Exception{
-        User mockUser = new User("email@gmail.com", "newName", "USER");
+        UserResponseDTO mockUser = new UserResponseDTO(1L, "email@gmail.com", "newName", "USER");
         when(userService.getAllUsers(0)).thenReturn(new PageImpl<>(List.of(mockUser)));
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())
@@ -76,8 +74,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void testPATCHUserWAdmin() throws Exception{
-        User mockUser = new User("email@gmail.com", "newName", "ADMIN");
-        when(userService.patchUser(1L, "ADMIN")).thenReturn(mockUser);
+        when(userService.patchUser(1L, "ADMIN")).thenReturn(new UserResponseDTO(1L, "email@gmail.com", "newName", "ADMIN"));
 
         mockMvc.perform(patch("/api/v1/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -183,6 +180,7 @@ public class UserControllerTest {
         when(userService.getUserById(1L)).thenReturn(mockUser);
         mockMvc.perform(delete("/api/v1/users/1"))
                 .andExpect(status().isNoContent());
+        verify(userService).deleteUser(1L);
     }
 
 
@@ -217,13 +215,11 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void testPATCHUserWUser() throws Exception{
-        User mockUser = new User("email@gmail.com", "newName", "ADMIN");
-        when(userService.patchUser(1L, "ADMIN")).thenReturn(mockUser);
-
         mockMvc.perform(patch("/api/v1/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"role\":\"ADMIN\"}"))
                 .andExpect(status().isForbidden());
+        verifyNoInteractions(userService);
     }
 
     /**
@@ -246,8 +242,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "email@gmail.com", roles = "USER")
     void testGETLoggedInUser() throws Exception{
-        User mockUser = new User("email@gmail.com", "user", "USER");
-        when(userService.getUserByEmail("email@gmail.com")).thenReturn(mockUser);
+        when(userService.getUserByEmail("email@gmail.com")).thenReturn(new UserResponseDTO(1L, "email@gmail.com", "user", "USER"));
         mockMvc.perform(get("/api/v1/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("email@gmail.com"));
@@ -262,7 +257,7 @@ public class UserControllerTest {
     void testDELETELoggedInUser() throws Exception{
         User mockUser = mock(User.class);
         when(mockUser.getId()).thenReturn(1L);
-        when(userService.getUserByEmail("email@gmail.com")).thenReturn(mockUser);
+        when(userService.getUserByEmail("email@gmail.com")).thenReturn(new UserResponseDTO(1L, "email@gmail.com", "user", "USER"));
         mockMvc.perform(delete("/api/v1/users/me"))
                 .andExpect(status().isNoContent());
         verify(userService).deleteUser(1L);
