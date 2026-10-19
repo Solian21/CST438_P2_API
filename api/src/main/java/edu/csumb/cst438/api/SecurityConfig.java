@@ -58,6 +58,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/{userid}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/users/{userid}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/users/{userid}").hasRole("ADMIN")
+                        // Anyone can browse ingredients.
+                        .requestMatchers(HttpMethod.GET,  "/api/v1/ingredients", "/api/v1/ingredients/**").permitAll()
+                        //only authenticated users can add ingredients
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ingredients").authenticated()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
