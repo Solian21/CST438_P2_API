@@ -1,6 +1,9 @@
 package edu.csumb.cst438.api.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.util.*;
@@ -53,6 +56,15 @@ public class User {
     public User(String email, String displayName, String role) {
         this.email = email;
         this.displayName = displayName;
+        this.role = role;
+    }
+
+    /**
+     * Updates role
+     * Not 110% sure if there's a better way to do this...
+     * @param role USER / ADMIN
+     */
+    public void changeRole(String role){
         this.role = role;
     }
 
