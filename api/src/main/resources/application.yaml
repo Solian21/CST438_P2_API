@@ -6,6 +6,12 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://accounts.google.com
+          audiences: ${GOOGLE_CLIENT_ID}
   datasource:
       url: ${DATABASE_URL}
       username: ${DB_USER}

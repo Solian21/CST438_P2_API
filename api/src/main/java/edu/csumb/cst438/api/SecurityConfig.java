@@ -14,6 +14,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 /**
  * This class should limit specific API routes to admin only
@@ -59,10 +60,29 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/users/{userid}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/users/{userid}").hasRole("ADMIN")
                         .anyRequest().authenticated()
+
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(entryPoint)
-                        .accessDeniedHandler(deniedHandler));
+                        .accessDeniedHandler(deniedHandler))
+                // Adding in OAuth
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwt ->
+                                jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
         return http.build();
+    }
+
+    /**
+     * This converts the Google JWT into a Spring authentication object
+     * The users email becmes the principal name
+     * This lets controllers use principal.getName() to identify the current user
+     * @return a JWT authentication converter that uses the email claim
+     */
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setPrincipalClaimName("email");
+        return converter;
     }
 }
