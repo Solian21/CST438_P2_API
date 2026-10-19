@@ -3,6 +3,7 @@ package edu.csumb.cst438.api;
 import edu.csumb.cst438.api.controller.MealPlanController;
 import edu.csumb.cst438.api.record.MealPlanResponse;
 import edu.csumb.cst438.api.service.MealPlanService;
+import edu.csumb.cst438.api.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -17,6 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 import java.security.Principal;
 import java.time.LocalDate;
@@ -29,6 +31,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 
 // TODO(#48): once Spring Security is on the classpath, use @WithMockUser("owner@example.com")
 //  instead of .principal(...) and add a "no credentials -> 401 problem+json" test.
@@ -45,6 +48,18 @@ public class MealPlanControllerTest {
 
     @MockitoBean
     private MealPlanService mealPlanService;
+
+    /**
+     * Mock repository used by SecurityConfig to load the authenticated user's database role
+     */
+    @MockitoBean
+    private UserRepository userRepository;
+
+    /**
+     * Mock Jwtdecoder used to simulate valid and invalid JWT tokens without contacting Google's athentication servers
+     */
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     private static MockHttpServletRequestBuilder json(MockHttpServletRequestBuilder request, String body) {
         return request.contentType(MediaType.APPLICATION_JSON).content(body);
