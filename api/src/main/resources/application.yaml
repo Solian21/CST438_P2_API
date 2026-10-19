@@ -19,3 +19,7 @@ spring:
       hibernate:
         default_batch_fetch_size: 100
     show-sql: true
+  data:
+    web:
+      pageable:
+        serialization-mode: via_dto

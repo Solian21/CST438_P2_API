@@ -6,10 +6,12 @@ import edu.csumb.cst438.api.service.MealPlanService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // TODO(#48): once Spring Security is on the classpath, use @WithMockUser("owner@example.com")
 //  instead of .principal(...) and add a "no credentials -> 401 problem+json" test.
 @WebMvcTest(MealPlanController.class)
+@Import(SecurityConfig.class)
 @ActiveProfiles("test")
 public class MealPlanControllerTest {
     private static final String EMAIL = "owner@example.com";
@@ -44,15 +47,16 @@ public class MealPlanControllerTest {
     private MealPlanService mealPlanService;
 
     private static MockHttpServletRequestBuilder json(MockHttpServletRequestBuilder request, String body) {
-        return request.principal(USER).contentType(MediaType.APPLICATION_JSON).content(body);
+        return request.contentType(MediaType.APPLICATION_JSON).content(body);
     }
 
     @Test
+    @WithMockUser("owner@example.com")
     void listReturnsPageShape() throws Exception {
         when(mealPlanService.list(EMAIL, 0, 20)).thenReturn(
                 new PageImpl<>(List.of(new MealPlanResponse(67L, WEEK, List.of())), PageRequest.of(0, 20), 1));
 
-        mvc.perform(get("/api/v1/meal-plans").principal(USER))
+        mvc.perform(get("/api/v1/meal-plans"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(67))
                 .andExpect(jsonPath("$.content[0].weekStart").value("2026-10-05"))
@@ -64,18 +68,20 @@ public class MealPlanControllerTest {
     }
 
     @Test
+    @WithMockUser("owner@example.com")
     void listRejectsBadPaging() throws Exception {
-        mvc.perform(get("/api/v1/meal-plans?size=101").principal(USER))
+        mvc.perform(get("/api/v1/meal-plans?size=101"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
-        mvc.perform(get("/api/v1/meal-plans?page=-1").principal(USER))
+        mvc.perform(get("/api/v1/meal-plans?page=-1"))
                 .andExpect(status().isBadRequest());
-        mvc.perform(get("/api/v1/meal-plans?size=0").principal(USER))
+        mvc.perform(get("/api/v1/meal-plans?size=0"))
                 .andExpect(status().isBadRequest());
         verifyNoInteractions(mealPlanService);
     }
 
     @Test
+    @WithMockUser("owner@example.com")
     void createReturns201WithLocation() throws Exception {
         when(mealPlanService.create(EMAIL, WEEK)).thenReturn(new MealPlanResponse(67L, WEEK, List.of()));
 
@@ -86,6 +92,7 @@ public class MealPlanControllerTest {
     }
 
     @Test
+    @WithMockUser("owner@example.com")
     void createRejectsMissingOrInvalidDate() throws Exception {
         mvc.perform(json(post("/api/v1/meal-plans"), "{}"))
                 .andExpect(status().isBadRequest())
@@ -96,6 +103,7 @@ public class MealPlanControllerTest {
     }
 
     @Test
+    @WithMockUser("owner@example.com")
     void updateChangesWeek() throws Exception {
         LocalDate next = LocalDate.of(2026, 10, 12);
         when(mealPlanService.update(EMAIL, 67L, next)).thenReturn(new MealPlanResponse(67L, next, List.of()));
@@ -106,6 +114,7 @@ public class MealPlanControllerTest {
     }
 
     @Test
+    @WithMockUser("owner@example.com")
     void updateRejectsEmptyOrInvalidBody() throws Exception {
         mvc.perform(json(patch("/api/v1/meal-plans/67"), "{}"))
                 .andExpect(status().isBadRequest());
@@ -115,19 +124,21 @@ public class MealPlanControllerTest {
     }
 
     @Test
+    @WithMockUser("owner@example.com")
     void deleteReturns204() throws Exception {
-        mvc.perform(delete("/api/v1/meal-plans/67").principal(USER))
+        mvc.perform(delete("/api/v1/meal-plans/67"))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
         verify(mealPlanService).delete(EMAIL, 67L);
     }
 
     @Test
+    @WithMockUser("owner@example.com")
     void notFoundIsProblemDetails() throws Exception {
         when(mealPlanService.get(eq(EMAIL), any())).thenThrow(
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Meal plan 99 not found"));
 
-        mvc.perform(get("/api/v1/meal-plans/99").principal(USER))
+        mvc.perform(get("/api/v1/meal-plans/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
