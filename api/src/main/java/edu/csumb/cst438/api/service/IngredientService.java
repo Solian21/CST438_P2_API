@@ -4,6 +4,7 @@ import edu.csumb.cst438.api.entity.Ingredient;
 import edu.csumb.cst438.api.record.IngredientCreate;
 import edu.csumb.cst438.api.record.IngredientResponse;
 import edu.csumb.cst438.api.repository.IngredientRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,9 +48,18 @@ public class IngredientService {
         Ingredient ingredient =
                 new Ingredient(request.ingredientName());
 
-        Ingredient savedIngredient =
-                ingredientRepository.save(ingredient);
+        try {
+            Ingredient savedIngredient =
+                    ingredientRepository.saveAndFlush(ingredient);
 
-        return IngredientResponse.from(savedIngredient);
+            return IngredientResponse.from(savedIngredient);
+
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ingredient already exists",
+                    exception
+            );
+        }
     }
 }
