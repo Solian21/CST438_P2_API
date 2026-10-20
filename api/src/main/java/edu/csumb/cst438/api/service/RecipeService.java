@@ -1,5 +1,6 @@
 package edu.csumb.cst438.api.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import edu.csumb.cst438.api.entity.Ingredient;
 import edu.csumb.cst438.api.entity.Recipe;
 import edu.csumb.cst438.api.entity.User;
@@ -18,6 +19,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Provides business logic for recipe operations.
+ */
 @Service
 @Transactional
 public class RecipeService {
@@ -25,6 +29,12 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
     private final IngredientRepository ingredientRepository;
 
+    /**
+     * Creates a recipe service.
+     *
+     * @param recipeRepository repository for recipes
+     * @param ingredientRepository repository for ingredients
+     */
     public RecipeService(
             RecipeRepository recipeRepository,
             IngredientRepository ingredientRepository) {
@@ -32,6 +42,12 @@ public class RecipeService {
         this.ingredientRepository = ingredientRepository;
     }
 
+    /**
+     * Lists recipes using pagination and sorting.
+     *
+     * @param pageable pagination and sorting information
+     * @return a page of recipes
+     */
     @Transactional(readOnly = true)
     public Page<RecipeResponse> listRecipes(Pageable pageable) {
         return recipeRepository
@@ -39,6 +55,13 @@ public class RecipeService {
                 .map(RecipeResponse::from);
     }
 
+    /**
+     * Creates a recipe for the specified user.
+     *
+     * @param request recipe creation data
+     * @param owner user who owns the recipe
+     * @return the created recipe
+     */
     public RecipeResponse createRecipe(
             RecipeCreate request,
             User owner) {
@@ -55,18 +78,36 @@ public class RecipeService {
 
         ingredients.forEach(recipe::addIngredient);
 
-        return RecipeResponse.from(recipeRepository.save(recipe));
+        return RecipeResponse.from(
+                recipeRepository.save(recipe)
+        );
     }
 
+    /**
+     * Retrieves a recipe by ID.
+     *
+     * @param recipeId recipe ID
+     * @return the requested recipe
+     * @throws EntityNotFoundException if the recipe does not exist
+     */
     @Transactional(readOnly = true)
     public RecipeResponse getRecipe(Long recipeId) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Recipe " + recipeId + " not found"));
+                        "Recipe " + recipeId + " not found"
+                ));
 
         return RecipeResponse.from(recipe);
     }
 
+    /**
+     * Replaces all editable fields of a user's recipe.
+     *
+     * @param recipeId recipe ID
+     * @param request replacement data
+     * @param owner authenticated user
+     * @return the updated recipe
+     */
     public RecipeResponse replaceRecipe(
             Long recipeId,
             RecipeCreate request,
@@ -85,6 +126,17 @@ public class RecipeService {
         return RecipeResponse.from(recipe);
     }
 
+    /**
+     * Partially updates a user's recipe.
+     *
+     * Missing fields retain their existing values. Fields explicitly set
+     * to null are cleared.
+     *
+     * @param recipeId recipe ID
+     * @param request partial update data
+     * @param owner authenticated user
+     * @return the updated recipe
+     */
     public RecipeResponse patchRecipe(
             Long recipeId,
             RecipePatch request,
@@ -96,15 +148,21 @@ public class RecipeService {
                 ? request.name()
                 : recipe.getName();
 
-        String measurements = request.measurements() != null
-                ? request.measurements()
-                : recipe.getMeasurements();
+        String measurements = patchValue(
+                request.measurements(),
+                recipe.getMeasurements()
+        );
 
-        String instructions = request.instructions() != null
-                ? request.instructions()
-                : recipe.getInstructions();
+        String instructions = patchValue(
+                request.instructions(),
+                recipe.getInstructions()
+        );
 
-        recipe.updateDetails(name, measurements, instructions);
+        recipe.updateDetails(
+                name,
+                measurements,
+                instructions
+        );
 
         if (request.ingredientIds() != null) {
             replaceIngredients(recipe, request.ingredientIds());
@@ -113,25 +171,48 @@ public class RecipeService {
         return RecipeResponse.from(recipe);
     }
 
+    /**
+     * Deletes a user's recipe.
+     *
+     * @param recipeId recipe ID
+     * @param owner authenticated user
+     */
     public void deleteRecipe(Long recipeId, User owner) {
         Recipe recipe = findOwnedRecipe(recipeId, owner);
         recipeRepository.delete(recipe);
     }
 
+    /**
+     * Finds a recipe and verifies that it belongs to the specified user.
+     *
+     * @param recipeId recipe ID
+     * @param owner authenticated user
+     * @return the owned recipe
+     * @throws EntityNotFoundException if the recipe does not exist or
+     *                                  belongs to another user
+     */
     private Recipe findOwnedRecipe(Long recipeId, User owner) {
         Recipe recipe = recipeRepository.findById(recipeId)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Recipe " + recipeId + " not found"));
+                        "Recipe " + recipeId + " not found"
+                ));
 
         if (recipe.getOwner() == null
                 || !recipe.getOwner().getId().equals(owner.getId())) {
             throw new EntityNotFoundException(
-                    "Recipe " + recipeId + " not found");
+                    "Recipe " + recipeId + " not found"
+            );
         }
 
         return recipe;
     }
 
+    /**
+     * Replaces all ingredients assigned to a recipe.
+     *
+     * @param recipe recipe being updated
+     * @param ingredientIds new ingredient IDs
+     */
     private void replaceIngredients(
             Recipe recipe,
             Set<Long> ingredientIds) {
@@ -146,15 +227,53 @@ public class RecipeService {
         newIngredients.forEach(recipe::addIngredient);
     }
 
+    /**
+     * Finds all ingredients referenced by their IDs.
+     *
+     * @param ingredientIds ingredient IDs
+     * @return matching ingredients
+     * @throws EntityNotFoundException if an ingredient is missing
+     */
     private Set<Ingredient> findIngredients(Set<Long> ingredientIds) {
         List<Ingredient> ingredients =
                 ingredientRepository.findAllById(ingredientIds);
 
         if (ingredients.size() != ingredientIds.size()) {
             throw new EntityNotFoundException(
-                    "One or more ingredients were not found");
+                    "One or more ingredients were not found"
+            );
         }
 
         return new HashSet<>(ingredients);
+    }
+
+    /**
+     * Applies PATCH semantics to a nullable text field.
+     *
+     * @param value incoming JSON value
+     * @param currentValue existing database value
+     * @return the updated value
+     */
+    private String patchValue(
+            JsonNode value,
+            String currentValue) {
+
+        // The field was omitted, so preserve the old value.
+        if (value == null) {
+            return currentValue;
+        }
+
+        // The field was explicitly set to null, so clear it.
+        if (value.isNull()) {
+            return null;
+        }
+
+        if (!value.isTextual()) {
+            throw new IllegalArgumentException(
+                    "Recipe text fields must be strings or null"
+            );
+        }
+
+        return value.asText();
     }
 }
