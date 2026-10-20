@@ -9,6 +9,9 @@ import edu.csumb.cst438.api.controller.UserController;
 import edu.csumb.cst438.api.entity.User;
 import edu.csumb.cst438.api.record.UserResponseDTO;
 import edu.csumb.cst438.api.service.UserService;
+import edu.csumb.cst438.api.repository.UserRepository;
+
+
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.oauth2.jwt.BadJwtException;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 import java.util.List;
 
@@ -37,6 +43,18 @@ public class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    /**
+     * Mock repository used by SecurityConfig to load the authenticated user's database role
+     */
+    @MockitoBean
+    private UserRepository userRepository;
+
+    /**
+     * Mock decoder used to simulate invalid JWT tokens
+     */
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     /**
      * Tests if GET /api/v1/users works with ADMIN role
@@ -149,6 +167,27 @@ public class UserControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(header().exists("WWW-Authenticate"))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.instance").value("/api/v1/users"));
+    }
+
+    /**
+     * Verifies that an invalid bearer token returns a 401 response with a problem details JSON bosy and the required WWW-Authenticate header
+     * @throws Exception if the MockMvc request fails
+     */
+    @Test
+    void testInvalidBearerTokenReturnsProblemDetails() throws Exception {
+        when(jwtDecoder.decode("invalid-token"))
+                .thenThrow(new BadJwtException("Invalid bearer token"));
+
+        mockMvc.perform(get("/api/v1/users")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(
+                        MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(header().string(
+                        HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
                 .andExpect(jsonPath("$.title").value("Unauthorized"))
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.instance").value("/api/v1/users"));
