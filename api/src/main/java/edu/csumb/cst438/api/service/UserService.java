@@ -26,12 +26,15 @@ public class UserService {
 
     /**
      * Gets user by email for future oauth stuff
+     * This also creates the user on the first sign in
      * @param email user email
      * @return the user
      */
     public UserResponseDTO getUserByEmail(String email){
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("No user found for the authenticated account"));
+                .orElseGet(() -> userRepository.save(
+                        new User(email, email, "USER")
+                ));
         return new UserResponseDTO(
                 user.getId(),
                 user.getEmail(),
