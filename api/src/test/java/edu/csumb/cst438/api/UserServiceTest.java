@@ -190,7 +190,22 @@ public class UserServiceTest {
      */
     @Test
     void testGetUserByEmailNotFound(){
-        Mockito.when(userRepository.findByEmail("no@gmail.com")).thenReturn(Optional.empty());
-        assertThrows(EntityNotFoundException.class, () -> userService.getUserByEmail("no@gmail.com"));
+        Mockito.when(userRepository.findByEmail("no@gmail.com"))
+                .thenReturn(Optional.empty());
+
+        User savedUser = new User("no@gmail.com", "no@gmail.com", "USER");
+
+        Mockito.when(userRepository.save(any(User.class)))
+                .thenReturn(savedUser);
+
+        UserResponseDTO result =
+                userService.getUserByEmail("no@gmail.com");
+
+        assertNotNull(result);
+        assertEquals("no@gmail.com", result.email());
+        assertEquals("no@gmail.com", result.displayName());
+        assertEquals("USER", result.role());
+
+        Mockito.verify(userRepository).save(any(User.class));
     }
 }
