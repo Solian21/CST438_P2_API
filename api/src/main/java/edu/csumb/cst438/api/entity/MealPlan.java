@@ -2,6 +2,7 @@ package edu.csumb.cst438.api.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.hibernate.Hibernate;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -62,7 +63,8 @@ public class MealPlan {
         if(mealPlanEntry == null){
             throw new IllegalArgumentException("Meal plan entry must not be null.");
         }
-        if(mealPlanEntry.getMealPlan() != null && mealPlanEntry.getMealPlan() != this){
+        // unproxy: a lazy-loaded getter returns a Hibernate proxy, which is never == this
+        if(mealPlanEntry.getMealPlan() != null && Hibernate.unproxy(mealPlanEntry.getMealPlan()) != this){
             throw new IllegalStateException("A meal plan entry cannot be transferred between meal plans.");
         }
         mealPlanEntries.add(mealPlanEntry);
@@ -77,7 +79,7 @@ public class MealPlan {
      * @throws IllegalArgumentException if the entry doesn't belong to this meal plan or if the entry is null
      */
     public void removeMealPlanEntry(MealPlanEntry mealPlanEntry){
-        if(mealPlanEntry == null || mealPlanEntry.getMealPlan() != this){
+        if(mealPlanEntry == null || Hibernate.unproxy(mealPlanEntry.getMealPlan()) != this){
             throw new IllegalArgumentException("Meal plan entry does not belong to meal plan.");
         }
         mealPlanEntries.remove(mealPlanEntry);
