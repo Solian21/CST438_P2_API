@@ -787,16 +787,18 @@ components:
     RecipeCreate:
       description: Body for POST and PUT. PUT replaces every field.
       type: object
-      required: [name, ingredients, measurements, instructions]
+      required: [name, ingredientIds, measurements, instructions]
       properties:
         name:
           type: string
           minLength: 1
           example: Brown Sugar Oatmeal
-        ingredients:
+        ingredientIds:
           type: array
           items:
-            $ref: '#/components/schemas/Ingredient'
+            type: integer
+            format: int64
+          example: [1, 2, 3]
         measurements:
           type: string
           nullable: true
@@ -823,10 +825,16 @@ components:
       type: object
       minProperties: 1
       properties:
-        ingredients:
+        name:
+          type: string
+          minLength: 1
+          example: Updated Recipe Name
+        ingredientIds:
           type: array
           items:
-            $ref: '#/components/schemas/Ingredient'
+            type: integer
+            format: int64
+          example: [1, 3]
         measurements:
           type: string
           nullable: true
