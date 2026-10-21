@@ -1,9 +1,14 @@
 package edu.csumb.cst438.api.service;
 
 import edu.csumb.cst438.api.entity.MealPlan;
+import edu.csumb.cst438.api.entity.MealPlanEntry;
+import edu.csumb.cst438.api.entity.Recipe;
 import edu.csumb.cst438.api.entity.User;
+import edu.csumb.cst438.api.record.MealPlanEntryPatch;
+import edu.csumb.cst438.api.record.MealPlanEntryResponse;
 import edu.csumb.cst438.api.record.MealPlanResponse;
 import edu.csumb.cst438.api.repository.MealPlanRepository;
+import edu.csumb.cst438.api.repository.RecipeRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,13 +28,16 @@ import java.time.LocalDate;
 @Transactional
 public class MealPlanService {
     private final MealPlanRepository mealPlanRepository;
+    private final RecipeRepository recipeRepository;
 
     /**
      * Constructor for MealPlanService
      * @param mealPlanRepository the meal plan repository
+     * @param recipeRepository the recipe repository, for changing an entry's recipe
      */
-    public MealPlanService(MealPlanRepository mealPlanRepository) {
+    public MealPlanService(MealPlanRepository mealPlanRepository, RecipeRepository recipeRepository) {
         this.mealPlanRepository = mealPlanRepository;
+        this.recipeRepository = recipeRepository;
     }
 
     /**
@@ -100,6 +108,47 @@ public class MealPlanService {
         owner.removeMealPlan(findOwned(owner, mealPlanId));
     }
 
+    /**
+     * Changes the fields that were sent on one entry of the user's meal plan.
+     *
+     * @param email the signed-in user's email
+     * @param mealPlanId the meal plan id
+     * @param entryId the entry id
+     * @param patch the fields to change; null fields are left as they are
+     * @return the updated entry
+     * @throws ResponseStatusException 404 if the meal plan, entry, or recipe isn't the user's
+     */
+    public MealPlanEntryResponse updateEntry(String email, Long mealPlanId, Long entryId, MealPlanEntryPatch patch) {
+        User owner = currentUser(email);
+        MealPlanEntry entry = findEntry(findOwned(owner, mealPlanId), entryId);
+        if (patch.recipeId() != null) {
+            entry.changeRecipe(findUsableRecipe(owner, patch.recipeId()));
+        }
+        if (patch.plannedDate() != null) {
+            entry.changePlannedDate(patch.plannedDate());
+        }
+        if (patch.mealType() != null) {
+            entry.changeMealType(patch.mealType());
+        }
+        return MealPlanEntryResponse.from(entry);
+    }
+
+    /**
+     * Removes one entry from the user's meal plan. The recipe is kept.
+     *
+     * @param email the signed-in user's email
+     * @param mealPlanId the meal plan id
+     * @param entryId the entry id
+     * @throws ResponseStatusException 404 if the meal plan or entry isn't the user's
+     */
+    public void deleteEntry(String email, Long mealPlanId, Long entryId) {
+        MealPlan mealPlan = findOwned(currentUser(email), mealPlanId);
+        MealPlanEntry entry = findEntry(mealPlan, entryId);
+        entry.getRecipe().removeMealPlanEntry(entry);
+        // orphanRemoval deletes the row
+        mealPlan.removeMealPlanEntry(entry);
+    }
+
     // TODO(#48): replace with userService.getUserByEmail(email); see MealPlanRepository.findUserByEmail
     private User currentUser(String email) {
         return mealPlanRepository.findUserByEmail(email)
@@ -110,5 +159,21 @@ public class MealPlanService {
         return mealPlanRepository.findByIdAndOwner(mealPlanId, owner)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Meal plan " + mealPlanId + " not found"));
+    }
+
+    private MealPlanEntry findEntry(MealPlan mealPlan, Long entryId) {
+        return mealPlan.getMealPlanEntries().stream()
+                .filter(e -> entryId.equals(e.getId()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Meal plan entry " + entryId + " not found"));
+    }
+
+    // A user can plan their own recipes and the prepopulated ones; anything else is hidden as 404.
+    private Recipe findUsableRecipe(User owner, Long recipeId) {
+        return recipeRepository.findById(recipeId)
+                .filter(r -> r.isPrepopulated() || r.getOwner() == owner)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Recipe " + recipeId + " not found"));
     }
 }
