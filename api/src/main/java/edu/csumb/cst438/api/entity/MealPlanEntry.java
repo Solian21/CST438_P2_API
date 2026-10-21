@@ -53,6 +53,47 @@ public class MealPlanEntry {
     }
 
     /**
+     * Moves this entry to a different recipe and keeps both recipes' entry collections in sync.
+     *
+     * @param recipe the new recipe, cannot be null
+     * @throws IllegalArgumentException if recipe is null
+     */
+    public void changeRecipe(Recipe recipe){
+        if(recipe == null){
+            throw new IllegalArgumentException("Meal plan entries must have a recipe.");
+        }
+        this.recipe.removeMealPlanEntry(this);
+        this.recipe = null;
+        recipe.addMealPlanEntry(this);
+    }
+
+    /**
+     * Changes the date the meal is planned for.
+     *
+     * @param plannedDate the new date, cannot be null
+     * @throws IllegalArgumentException if plannedDate is null
+     */
+    public void changePlannedDate(LocalDate plannedDate){
+        if(plannedDate == null){
+            throw new IllegalArgumentException("Meal plan entries must have a planned date.");
+        }
+        this.plannedDate = plannedDate;
+    }
+
+    /**
+     * Changes the type of meal.
+     *
+     * @param mealType the new meal type, cannot be null
+     * @throws IllegalArgumentException if mealType is null
+     */
+    public void changeMealType(mealType mealType){
+        if(mealType == null){
+            throw new IllegalArgumentException("Meal plan entries must have a meal type.");
+        }
+        this.mealType = mealType;
+    }
+
+    /**
      * Called by MealPlan.addMealPlanEntry so the mealPlan side cannot get out of sync.
      */
     void setEntryFromMealPlan(MealPlan meal_plan){mealPlan = meal_plan;}
