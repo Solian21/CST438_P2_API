@@ -1,6 +1,8 @@
 package edu.csumb.cst438.api.controller;
 
 import edu.csumb.cst438.api.record.MealPlanCreate;
+import edu.csumb.cst438.api.record.MealPlanEntryPatch;
+import edu.csumb.cst438.api.record.MealPlanEntryResponse;
 import edu.csumb.cst438.api.record.MealPlanPatch;
 import edu.csumb.cst438.api.record.MealPlanResponse;
 import edu.csumb.cst438.api.service.MealPlanService;
@@ -99,6 +101,37 @@ public class MealPlanController {
     @DeleteMapping("/{mealPlanId}")
     public ResponseEntity<Void> deleteMealPlan(Principal principal, @PathVariable Long mealPlanId) {
         mealPlanService.delete(principal.getName(), mealPlanId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Changes the fields that were sent on one planned meal.
+     *
+     * @param principal the signed-in user
+     * @param mealPlanId the meal plan id
+     * @param entryId the entry id
+     * @param body the fields to change, at least one
+     * @return 200 with the updated entry
+     */
+    @PatchMapping("/{mealPlanId}/entries/{entryId}")
+    public MealPlanEntryResponse updateMealPlanEntry(Principal principal, @PathVariable Long mealPlanId,
+                                                     @PathVariable Long entryId,
+                                                     @Valid @RequestBody MealPlanEntryPatch body) {
+        return mealPlanService.updateEntry(principal.getName(), mealPlanId, entryId, body);
+    }
+
+    /**
+     * Removes one planned meal. The recipe is kept.
+     *
+     * @param principal the signed-in user
+     * @param mealPlanId the meal plan id
+     * @param entryId the entry id
+     * @return 204 with no body
+     */
+    @DeleteMapping("/{mealPlanId}/entries/{entryId}")
+    public ResponseEntity<Void> deleteMealPlanEntry(Principal principal, @PathVariable Long mealPlanId,
+                                                    @PathVariable Long entryId) {
+        mealPlanService.deleteEntry(principal.getName(), mealPlanId, entryId);
         return ResponseEntity.noContent().build();
     }
 }
