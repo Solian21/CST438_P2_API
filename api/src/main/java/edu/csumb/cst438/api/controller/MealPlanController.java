@@ -1,6 +1,7 @@
 package edu.csumb.cst438.api.controller;
 
 import edu.csumb.cst438.api.record.MealPlanCreate;
+import edu.csumb.cst438.api.record.MealPlanEntryCreate;
 import edu.csumb.cst438.api.record.MealPlanEntryPatch;
 import edu.csumb.cst438.api.record.MealPlanEntryResponse;
 import edu.csumb.cst438.api.record.MealPlanPatch;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.security.Principal;
+import java.util.List;
 
 /**
  * API routes for the signed-in user's weekly meal plans, under /api/v1/meal-plans.
@@ -102,6 +104,34 @@ public class MealPlanController {
     public ResponseEntity<Void> deleteMealPlan(Principal principal, @PathVariable Long mealPlanId) {
         mealPlanService.delete(principal.getName(), mealPlanId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Lists the planned meals in a meal plan.
+     *
+     * @param principal the signed-in user
+     * @param mealPlanId the meal plan id
+     * @return 200 with the entries
+     */
+    @GetMapping("/{mealPlanId}/entries")
+    public List<MealPlanEntryResponse> listMealPlanEntries(Principal principal, @PathVariable Long mealPlanId) {
+        return mealPlanService.listEntries(principal.getName(), mealPlanId);
+    }
+
+    /**
+     * Adds a recipe to a meal plan.
+     *
+     * @param principal the signed-in user
+     * @param mealPlanId the meal plan id
+     * @param body the recipe, date, and meal type
+     * @return 201 with the new entry and its Location
+     */
+    @PostMapping("/{mealPlanId}/entries")
+    public ResponseEntity<MealPlanEntryResponse> addMealPlanEntry(Principal principal, @PathVariable Long mealPlanId,
+                                                                  @Valid @RequestBody MealPlanEntryCreate body) {
+        MealPlanEntryResponse created = mealPlanService.addEntry(principal.getName(), mealPlanId, body);
+        return ResponseEntity.created(
+                URI.create("/api/v1/meal-plans/" + mealPlanId + "/entries/" + created.id())).body(created);
     }
 
     /**

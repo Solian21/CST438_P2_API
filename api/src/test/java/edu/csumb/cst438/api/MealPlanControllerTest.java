@@ -2,6 +2,7 @@ package edu.csumb.cst438.api;
 
 import edu.csumb.cst438.api.controller.MealPlanController;
 import edu.csumb.cst438.api.entity.mealType;
+import edu.csumb.cst438.api.record.MealPlanEntryCreate;
 import edu.csumb.cst438.api.record.MealPlanEntryPatch;
 import edu.csumb.cst438.api.record.MealPlanEntryResponse;
 import edu.csumb.cst438.api.record.MealPlanResponse;
@@ -223,6 +224,67 @@ public class MealPlanControllerTest {
         mvc.perform(json(patch("/api/v1/meal-plans/67/entries/5"), "{\"mealType\":\"LUNCH\"}"))
                 .andExpect(status().isUnauthorized());
         mvc.perform(delete("/api/v1/meal-plans/67/entries/5"))
+                .andExpect(status().isUnauthorized());
+        verifyNoInteractions(mealPlanService);
+    }
+
+    @Test
+    @WithMockUser("owner@example.com")
+    void listEntriesReturnsArray() throws Exception {
+        when(mealPlanService.listEntries(EMAIL, 67L))
+                .thenReturn(List.of(new MealPlanEntryResponse(5L, 67L, 42L, WEEK, mealType.DINNER)));
+
+        mvc.perform(get("/api/v1/meal-plans/67/entries"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(5))
+                .andExpect(jsonPath("$[0].recipeId").value(42));
+    }
+
+    @Test
+    @WithMockUser("owner@example.com")
+    void addEntryReturns201WithLocation() throws Exception {
+        when(mealPlanService.addEntry(EMAIL, 67L, new MealPlanEntryCreate(42L, WEEK, mealType.LUNCH)))
+                .thenReturn(new MealPlanEntryResponse(5L, 67L, 42L, WEEK, mealType.LUNCH));
+
+        mvc.perform(json(post("/api/v1/meal-plans/67/entries"),
+                        "{\"recipeId\":42,\"plannedDate\":\"2026-10-05\",\"mealType\":\"LUNCH\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/v1/meal-plans/67/entries/5"))
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.mealType").value("LUNCH"));
+    }
+
+    @Test
+    @WithMockUser("owner@example.com")
+    void addEntryRejectsMissingOrInvalidFields() throws Exception {
+        mvc.perform(json(post("/api/v1/meal-plans/67/entries"), "{\"recipeId\":42,\"mealType\":\"LUNCH\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON));
+        mvc.perform(json(post("/api/v1/meal-plans/67/entries"),
+                        "{\"recipeId\":42,\"plannedDate\":\"2026-10-05\",\"mealType\":\"BRUNCH\"}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(mealPlanService);
+    }
+
+    @Test
+    @WithMockUser("owner@example.com")
+    void dateOutsideWeekIsBadRequest() throws Exception {
+        when(mealPlanService.addEntry(eq(EMAIL), eq(67L), any())).thenThrow(
+                new IllegalArgumentException("Planned date 2026-10-12 must be within the week starting 2026-10-05."));
+
+        mvc.perform(json(post("/api/v1/meal-plans/67/entries"),
+                        "{\"recipeId\":42,\"plannedDate\":\"2026-10-12\",\"mealType\":\"LUNCH\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Planned date 2026-10-12 must be within the week starting 2026-10-05."));
+    }
+
+    @Test
+    void entryListAndAddRequireToken() throws Exception {
+        mvc.perform(get("/api/v1/meal-plans/67/entries"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(json(post("/api/v1/meal-plans/67/entries"),
+                        "{\"recipeId\":42,\"plannedDate\":\"2026-10-05\",\"mealType\":\"LUNCH\"}"))
                 .andExpect(status().isUnauthorized());
         verifyNoInteractions(mealPlanService);
     }

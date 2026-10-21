@@ -4,6 +4,7 @@ import edu.csumb.cst438.api.entity.MealPlan;
 import edu.csumb.cst438.api.entity.MealPlanEntry;
 import edu.csumb.cst438.api.entity.Recipe;
 import edu.csumb.cst438.api.entity.User;
+import edu.csumb.cst438.api.record.MealPlanEntryCreate;
 import edu.csumb.cst438.api.record.MealPlanEntryPatch;
 import edu.csumb.cst438.api.record.MealPlanEntryResponse;
 import edu.csumb.cst438.api.record.MealPlanResponse;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Business logic for the signed-in user's meal plans.
@@ -80,7 +82,7 @@ public class MealPlanService {
     }
 
     /**
-     * Changes the week of one of the user's meal plans. Entries are left unchanged.
+     * Changes the week of one of the user's meal plans. Entries move with the week.
      *
      * @param email the signed-in user's email
      * @param mealPlanId the meal plan id
@@ -109,6 +111,39 @@ public class MealPlanService {
     }
 
     /**
+     * Lists the entries of one of the user's meal plans.
+     *
+     * @param email the signed-in user's email
+     * @param mealPlanId the meal plan id
+     * @return the meal plan's entries
+     * @throws ResponseStatusException 404 if missing or owned by another user
+     */
+    @Transactional(readOnly = true)
+    public List<MealPlanEntryResponse> listEntries(String email, Long mealPlanId) {
+        return MealPlanResponse.from(findOwned(currentUser(email), mealPlanId)).entries();
+    }
+
+    /**
+     * Adds a recipe to one of the user's meal plans.
+     *
+     * @param email the signed-in user's email
+     * @param mealPlanId the meal plan id
+     * @param body the recipe, date, and meal type
+     * @return the new entry
+     * @throws ResponseStatusException 404 if the meal plan or recipe isn't the user's
+     * @throws IllegalArgumentException if the date isn't in the meal plan's week (400)
+     */
+    public MealPlanEntryResponse addEntry(String email, Long mealPlanId, MealPlanEntryCreate body) {
+        User owner = currentUser(email);
+        MealPlan mealPlan = findOwned(owner, mealPlanId);
+        MealPlanEntry entry = new MealPlanEntry(mealPlan, findUsableRecipe(owner, body.recipeId()),
+                body.plannedDate(), body.mealType());
+        // flush so the generated id is in the response
+        mealPlanRepository.flush();
+        return MealPlanEntryResponse.from(entry);
+    }
+
+    /**
      * Changes the fields that were sent on one entry of the user's meal plan.
      *
      * @param email the signed-in user's email
@@ -117,6 +152,7 @@ public class MealPlanService {
      * @param patch the fields to change; null fields are left as they are
      * @return the updated entry
      * @throws ResponseStatusException 404 if the meal plan, entry, or recipe isn't the user's
+     * @throws IllegalArgumentException if the new date isn't in the meal plan's week (400)
      */
     public MealPlanEntryResponse updateEntry(String email, Long mealPlanId, Long entryId, MealPlanEntryPatch patch) {
         User owner = currentUser(email);

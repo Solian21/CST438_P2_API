@@ -1,7 +1,9 @@
 package edu.csumb.cst438.api;
 
 import edu.csumb.cst438.api.entity.*;
+import edu.csumb.cst438.api.record.MealPlanEntryCreate;
 import edu.csumb.cst438.api.record.MealPlanEntryPatch;
+import edu.csumb.cst438.api.record.MealPlanEntryResponse;
 import edu.csumb.cst438.api.service.MealPlanService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
@@ -133,5 +135,31 @@ public class MealPlanServiceJpaTest {
         MealPlanEntry saved = entityManager.find(MealPlanEntry.class, entry.getId());
         assertThat(saved.getRecipe().getId()).isEqualTo(soup.getId());
         assertThat(saved.getMealType()).isEqualTo(mealType.LUNCH);
+    }
+
+    /**
+     * Adding an entry saves it with an id, and it is listed with the meal plan
+     */
+    @Test
+    void addEntryIsSaved() {
+        User owner = new User("owner@example.com", "Owner", "USER");
+        entityManager.persist(owner);
+        MealPlan mealPlan = new MealPlan(owner, LocalDate.of(2026, 10, 5));
+        Recipe recipe = new Recipe("Pizza", null, "Eat it", owner);
+        entityManager.persist(mealPlan);
+        entityManager.persist(recipe);
+        entityManager.flush();
+        entityManager.clear();
+
+        MealPlanEntryResponse created = mealPlanService.addEntry("owner@example.com", mealPlan.getId(),
+                new MealPlanEntryCreate(recipe.getId(), LocalDate.of(2026, 10, 7), mealType.LUNCH));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(created.id()).isNotNull();
+        assertThat(created.mealPlanId()).isEqualTo(mealPlan.getId());
+        assertThat(mealPlanService.listEntries("owner@example.com", mealPlan.getId()))
+                .singleElement()
+                .satisfies(e -> assertThat(e.recipeId()).isEqualTo(recipe.getId()));
     }
 }
