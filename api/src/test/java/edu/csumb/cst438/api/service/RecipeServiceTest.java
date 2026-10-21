@@ -1,6 +1,6 @@
 package edu.csumb.cst438.api.service;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.JsonNodeFactory;
 import edu.csumb.cst438.api.entity.Ingredient;
 import edu.csumb.cst438.api.entity.Recipe;
 import edu.csumb.cst438.api.entity.User;

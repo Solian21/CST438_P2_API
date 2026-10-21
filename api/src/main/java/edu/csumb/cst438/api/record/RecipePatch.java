@@ -1,7 +1,7 @@
 package edu.csumb.cst438.api.record;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.Pattern;
+import tools.jackson.databind.JsonNode;
 
 import java.util.Set;
 
