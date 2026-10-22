@@ -208,7 +208,7 @@ public class MealPlanService {
     // A user can plan their own recipes and the prepopulated ones; anything else is hidden as 404.
     private Recipe findUsableRecipe(User owner, Long recipeId) {
         return recipeRepository.findById(recipeId)
-                .filter(r -> r.isPrepopulated() || r.getOwner() == owner)
+                .filter(r -> r.isPrepopulated() || r.getOwner().getId().equals(owner.getId()))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Recipe " + recipeId + " not found"));
     }

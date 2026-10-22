@@ -49,6 +49,13 @@ public class MealPlanServiceTest {
     @BeforeEach
     void setUp() {
         owner = new User(EMAIL, "Owner", "USER");
+        ReflectionTestUtils.setField(owner, "id", 1L);
+    }
+
+    private static User otherUser() {
+        User other = new User("other@example.com", "Other", "USER");
+        ReflectionTestUtils.setField(other, "id", 2L);
+        return other;
     }
 
     private void signedIn() {
@@ -204,7 +211,7 @@ public class MealPlanServiceTest {
         signedIn();
         Recipe pizza = new Recipe("Pizza", null, "Eat it", owner);
         MealPlanEntry entry = ownedEntry(new MealPlan(owner, WEEK), pizza);
-        Recipe othersRecipe = new Recipe("Secret", null, "Shh", new User("other@example.com", "Other", "USER"));
+        Recipe othersRecipe = new Recipe("Secret", null, "Shh", otherUser());
         when(recipeRepository.findById(9L)).thenReturn(Optional.of(othersRecipe));
         when(recipeRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -280,6 +287,23 @@ public class MealPlanServiceTest {
     }
 
     /**
+     * The user's own recipe is accepted even when it's loaded as a different User instance
+     */
+    @Test
+    void addEntryAcceptsOwnRecipeWithDifferentOwnerInstance() {
+        signedIn();
+        MealPlan mealPlan = new MealPlan(owner, WEEK);
+        User sameOwner = new User(EMAIL, "Owner", "USER");
+        ReflectionTestUtils.setField(sameOwner, "id", 1L);
+        when(mealPlanRepository.findByIdAndOwner(1L, owner)).thenReturn(Optional.of(mealPlan));
+        when(recipeRepository.findById(9L)).thenReturn(Optional.of(new Recipe("Pizza", null, "Eat it", sameOwner)));
+
+        mealPlanService.addEntry(EMAIL, 1L, new MealPlanEntryCreate(9L, WEEK, mealType.LUNCH));
+
+        assertThat(mealPlan.getMealPlanEntries()).hasSize(1);
+    }
+
+    /**
      * Another user's recipe can't be added, and nothing is added to the plan
      */
     @Test
@@ -288,7 +312,7 @@ public class MealPlanServiceTest {
         MealPlan mealPlan = new MealPlan(owner, WEEK);
         when(mealPlanRepository.findByIdAndOwner(1L, owner)).thenReturn(Optional.of(mealPlan));
         when(recipeRepository.findById(9L)).thenReturn(Optional.of(
-                new Recipe("Secret", null, "Shh", new User("other@example.com", "Other", "USER"))));
+                new Recipe("Secret", null, "Shh", otherUser())));
 
         assertStatus(() -> mealPlanService.addEntry(EMAIL, 1L,
                 new MealPlanEntryCreate(9L, WEEK, mealType.LUNCH)), HttpStatus.NOT_FOUND);
