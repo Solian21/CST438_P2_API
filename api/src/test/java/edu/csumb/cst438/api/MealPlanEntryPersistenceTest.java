@@ -29,7 +29,7 @@ public class MealPlanEntryPersistenceTest {
         entityManager.persist(mealPlan);
         entityManager.persist(recipe);
 
-        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), mealType.DINNER);
+        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 12), mealType.DINNER);
         entityManager.flush();
         Long entryId = mealPlanEntry.getId();
         entityManager.clear();
@@ -54,7 +54,7 @@ public class MealPlanEntryPersistenceTest {
         entityManager.persist(mealPlan);
         entityManager.persist(recipe);
 
-        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), mealType.DINNER);
+        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 12), mealType.DINNER);
         entityManager.flush();
 
         owner.removeMealPlan(mealPlan);
@@ -77,7 +77,7 @@ public class MealPlanEntryPersistenceTest {
         entityManager.persist(mealPlan);
         entityManager.persist(recipe);
 
-        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 31), mealType.DINNER);
+        MealPlanEntry mealPlanEntry = new MealPlanEntry(mealPlan, recipe, LocalDate.of(2026, 10, 12), mealType.DINNER);
         entityManager.flush();
 
         entityManager.remove(recipe);

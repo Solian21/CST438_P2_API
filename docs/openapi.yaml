@@ -715,10 +715,11 @@ components:
           type: integer
           format: int64
           example: 57
-        plannedDate: 
+        plannedDate:
           type: string
           format: date
-          example: "2023-02-10"
+          description: Must be within the meal plan's week (weekStart through weekStart + 6 days), otherwise 400.
+          example: "2026-10-07"
         mealType:
           type: string
           enum: [BREAKFAST, LUNCH, DINNER]
@@ -736,7 +737,8 @@ components:
         plannedDate:
           type: string
           format: date
-          example: "2026-10-02"
+          description: Must be within the meal plan's week (weekStart through weekStart + 6 days), otherwise 400.
+          example: "2026-10-07"
         mealType:
           type: string
           enum: [BREAKFAST, LUNCH, DINNER]

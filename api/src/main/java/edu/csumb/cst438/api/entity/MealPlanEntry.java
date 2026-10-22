@@ -40,16 +40,71 @@ public class MealPlanEntry {
      * @param recipe the recipe this entry contains
      * @param planned_date the date the meal is planned to be made
      * @param meal_type the type of meal
-     * @throws IllegalArgumentException if anything inputted is null
+     * @throws IllegalArgumentException if anything inputted is null or the date isn't in the meal plan's week
      */
     public MealPlanEntry(MealPlan meal_plan, Recipe recipe, LocalDate planned_date, mealType meal_type){
         if(meal_plan == null || recipe == null || planned_date == null || meal_type == null){
             throw new IllegalArgumentException("Meal plan entries must have a meal plan, recipe, planned date, and meal type.");
         }
+        requireInWeek(meal_plan, planned_date);
         meal_plan.addMealPlanEntry(this);
         recipe.addMealPlanEntry(this);
         plannedDate = planned_date;
         mealType = meal_type;
+    }
+
+    /**
+     * Moves this entry to a different recipe and keeps both recipes' entry collections in sync.
+     *
+     * @param recipe the new recipe, cannot be null
+     * @throws IllegalArgumentException if recipe is null
+     */
+    public void changeRecipe(Recipe recipe){
+        if(recipe == null){
+            throw new IllegalArgumentException("Meal plan entries must have a recipe.");
+        }
+        this.recipe.removeMealPlanEntry(this);
+        this.recipe = null;
+        recipe.addMealPlanEntry(this);
+    }
+
+    /**
+     * Changes the date the meal is planned for.
+     *
+     * @param plannedDate the new date, cannot be null
+     * @throws IllegalArgumentException if plannedDate is null or isn't in the meal plan's week
+     */
+    public void changePlannedDate(LocalDate plannedDate){
+        if(plannedDate == null){
+            throw new IllegalArgumentException("Meal plan entries must have a planned date.");
+        }
+        requireInWeek(mealPlan, plannedDate);
+        this.plannedDate = plannedDate;
+    }
+
+    /**
+     * Called by MealPlan.changeWeekStart so entries move with their week.
+     */
+    void shiftPlannedDate(long days){plannedDate = plannedDate.plusDays(days);}
+
+    private static void requireInWeek(MealPlan mealPlan, LocalDate plannedDate){
+        if(!mealPlan.coversDate(plannedDate)){
+            throw new IllegalArgumentException("Planned date " + plannedDate + " must be within the week starting "
+                    + mealPlan.getWeekStart() + ".");
+        }
+    }
+
+    /**
+     * Changes the type of meal.
+     *
+     * @param mealType the new meal type, cannot be null
+     * @throws IllegalArgumentException if mealType is null
+     */
+    public void changeMealType(mealType mealType){
+        if(mealType == null){
+            throw new IllegalArgumentException("Meal plan entries must have a meal type.");
+        }
+        this.mealType = mealType;
     }
 
     /**

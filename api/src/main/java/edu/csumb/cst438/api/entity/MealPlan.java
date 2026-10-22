@@ -2,8 +2,10 @@ package edu.csumb.cst438.api.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.hibernate.Hibernate;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +64,8 @@ public class MealPlan {
         if(mealPlanEntry == null){
             throw new IllegalArgumentException("Meal plan entry must not be null.");
         }
-        if(mealPlanEntry.getMealPlan() != null && mealPlanEntry.getMealPlan() != this){
+        // unproxy: a lazy-loaded getter returns a Hibernate proxy, which is never == this
+        if(mealPlanEntry.getMealPlan() != null && Hibernate.unproxy(mealPlanEntry.getMealPlan()) != this){
             throw new IllegalStateException("A meal plan entry cannot be transferred between meal plans.");
         }
         mealPlanEntries.add(mealPlanEntry);
@@ -77,14 +80,15 @@ public class MealPlan {
      * @throws IllegalArgumentException if the entry doesn't belong to this meal plan or if the entry is null
      */
     public void removeMealPlanEntry(MealPlanEntry mealPlanEntry){
-        if(mealPlanEntry == null || mealPlanEntry.getMealPlan() != this){
+        if(mealPlanEntry == null || Hibernate.unproxy(mealPlanEntry.getMealPlan()) != this){
             throw new IllegalArgumentException("Meal plan entry does not belong to meal plan.");
         }
         mealPlanEntries.remove(mealPlanEntry);
     }
 
     /**
-     * Moves this meal plan to a different week. Entries are left unchanged.
+     * Moves this meal plan to a different week. Entries move by the same number of days,
+     * so they stay on the same weekday inside the plan's week.
      *
      * @param weekStart the new week start, cannot be null
      * @throws IllegalArgumentException if weekStart is null
@@ -93,7 +97,21 @@ public class MealPlan {
         if(weekStart == null){
             throw new IllegalArgumentException("Meal plans must have a starting week.");
         }
+        long days = ChronoUnit.DAYS.between(this.weekStart, weekStart);
+        for(MealPlanEntry entry : mealPlanEntries){
+            entry.shiftPlannedDate(days);
+        }
         this.weekStart = weekStart;
+    }
+
+    /**
+     * Checks whether a date is in this meal plan's week, weekStart through the 6 days after it.
+     *
+     * @param date the date to check
+     * @return true if the date is in the week
+     */
+    public boolean coversDate(LocalDate date){
+        return !date.isBefore(weekStart) && date.isBefore(weekStart.plusDays(7));
     }
 
     /**

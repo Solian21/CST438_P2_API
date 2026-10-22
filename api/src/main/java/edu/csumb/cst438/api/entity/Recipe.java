@@ -2,6 +2,7 @@ package edu.csumb.cst438.api.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
@@ -147,7 +148,8 @@ public class Recipe {
         if(mealPlanEntry == null){
             throw new IllegalArgumentException("Meal plan entry must not be null.");
         }
-        if(mealPlanEntry.getRecipe() != null && mealPlanEntry.getRecipe() != this){
+        // unproxy: a lazy-loaded getter returns a Hibernate proxy, which is never == this
+        if(mealPlanEntry.getRecipe() != null && Hibernate.unproxy(mealPlanEntry.getRecipe()) != this){
             throw new IllegalStateException("A meal plan entry cannot be transferred between recipes.");
         }
         mealPlanEntries.add(mealPlanEntry);
@@ -162,7 +164,7 @@ public class Recipe {
      * @throws IllegalArgumentException if the entry doesn't belong to this recipe or if the entry is null
      */
     public void removeMealPlanEntry(MealPlanEntry mealPlanEntry){
-        if(mealPlanEntry == null || mealPlanEntry.getRecipe() != this){
+        if(mealPlanEntry == null || Hibernate.unproxy(mealPlanEntry.getRecipe()) != this){
             throw new IllegalArgumentException("Meal plan entry does not have this recipe.");
         }
         mealPlanEntries.remove(mealPlanEntry);
