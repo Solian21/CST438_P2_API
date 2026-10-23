@@ -1,101 +1,62 @@
-# CST 438 Project 02: API Template
+# CST 438 Project 02: MealPlan and Recipe (API REPO)
 
-Starter repo for Project 02. **One person per team** clicks **Use this template → Create a new
-repository**, names it after your API, and adds teammates as collaborators.
+[Application Repo](https://github.com/Solian21/CST438_P2_Andrioid_App)<br>
 
-> Replace this README with your own in Sprint 4. The prompt lists what it must contain.
+Our API is an API that allows users to create recipes, ingredients, and meal plans. A user can use premade recipes or ingredients and add ingredients to their recipes. A user can make user specific weekly meal plans with meal plan entries that have recipes in them.<br>
+## Our Team
+#### DOYOUNG YANG - Yooze0x4c8
 
-## What's in here
-
-| Path | What it is | When |
-|---|---|---|
-| `docs/proposal.md` | Proposal template: pitch, resources, ER sketch, endpoints, choices, risks | **Thu 10/1** |
-| `docs/openapi.yaml` | A complete example contract (workout tracker). Replace it with your API. | Sprint 1 |
-| `redocly.yaml` | Lint rules for the contract | Sprint 1 |
-| `.github/ISSUE_TEMPLATE/user_story.md` | Every new issue starts as a user story with acceptance criteria | now |
-| `.github/pull_request_template.md` | Every PR starts with `Closes #` and a test checklist | now |
-| `.gitignore` | Gradle, Android, IntelliJ, Node, and **secrets** (`.env`, keystores, `local.properties`) | now |
-
-Where your code goes is up to you: an `api/` and an `android/` folder in this repo (monorepo),
-or a second repo for the Android app. Write it down in an ADR.
-
-## First 15 minutes
-
-- [ ] Add teammates: **Settings → Collaborators**
-- [ ] Protect `main`: **Settings → Rules → Rulesets → New branch ruleset**. Target the default branch,
-      require a PR with **2 approvals** (1 for a team of 3), block force pushes. Enforcement: **Active**.
-- [ ] Create milestones `Sprint 1` through `Sprint 4`: **Issues → Milestones**
-- [ ] Create a Project board (Kanban) and link it: **Projects tab → Link a project**
-- [ ] Start `docs/proposal.md` on a branch:
-
-```bash
-git switch -c docs/proposal
-# edit docs/proposal.md
-git add docs/proposal.md
-git commit -m "Draft proposal"
-git push -u origin docs/proposal
-gh pr create --fill
-```
-
-## Run locally with Docker
-
-Starts the API on http://localhost:8080 and a local Postgres on port 5432 (dev only; the deployed API uses Neon):
-
-```bash
-docker compose up --build        # Ctrl+C to stop
-curl http://localhost:8080/actuator/health
-docker compose down              # add -v to wipe the local database
-```
-
-Every merge to `main` publishes the image to GHCR, tagged `latest` and the commit SHA:
-
-```bash
-docker pull ghcr.io/solian21/cst438_p2_api:latest
-```
-
-## Coverage
-
-`./gradlew check` (run in `api/`) fails if line coverage on `edu.csumb.cst438.api.service` is below 70%.
-The report is at `api/build/reports/jacoco/test/html/index.html`.
-
-## Working with the contract
-
-No installs needed beyond Node (`npx` runs the tools).
-
-```bash
-# Lint: fix every error before you open a PR
-npx @redocly/cli lint docs/openapi.yaml
-
-# Mock server: a fake API built from the contract, at http://127.0.0.1:4010
-npx @stoplight/prism-cli mock docs/openapi.yaml
-```
-The Prism mock server runs at http://127.0.0.1:4010
+[Issues](https://github.com/Solian21/CST438_P2_API/issues?q=is%3Aissue+state%3Aclosed+assignee%3AYooze0x4c8)<br>
+[Pull Requests](https://github.com/Solian21/CST438_P2_API/pulls?q=is%3Apr+state%3Aclosed+author%3AYooze0x4c8)<br><br>
+**Worked on**<br>
+- Project setup: Created the Spring Boot skeleton and wrote the OpenAPI (api.yaml) contract
+- DevOps: Added a Dockerfile, docker-compose for local dev, and GitHub Actions CI
+- Quality gates: Required 70% service-layer test coverage with JaCoCo and set up auto reviewers
+- Deployment: Published the Docker image to GHCR on merge to main
+- Meal Plan API: Built CRUD routes for meal plans and their entries, plus Swagger UI docs
 
 
-The mock **validates** your requests and returns the `example:` values from the contract.
-**Nothing is saved**: a POST followed by a GET returns the example, not what you posted. The
-Android emulator reaches it at `http://10.0.2.2:4010`.
+#### Lesly Villanueva - leslyVillanueva1020
 
-To see the contract rendered, paste `docs/openapi.yaml` into https://editor.swagger.io.
+[Issues](https://github.com/Solian21/CST438_P2_API/issues?q=is%3Aissue+state%3Aclosed+assignee%3AleslyVillanueva1020)<br>
+[Pull Requests](https://github.com/Solian21/CST438_P2_API/pulls?q=is%3Apr+state%3Aclosed+author%3AleslyVillanueva1020)<br><br>
+**Worked on**<br>
+- Built the the User, Ingredient, and Recipe entities
+    - Including tables, constraints, and relationships in neon
+- Ingredient API has pagination browsing, duplicate name validation, and service tests
+- Developed Recipe API functionality, pagination, sorting, ingredient association, ownership checks, and HTTP responses
 
-## Links
+#### Carlos Solian - Solian21
 
-- Project 02 prompt and rubric: Canvas → Project 02 module
-- OpenAPI 3.0 spec: https://spec.openapis.org/oas/v3.0.3
-- Prism: https://docs.stoplight.io/docs/prism
-- Mermaid ER diagrams: https://mermaid.js.org/syntax/entityRelationshipDiagram.html
-- RFC 9457 Problem Details: https://www.rfc-editor.org/rfc/rfc9457
+[Issues](https://github.com/Solian21/CST438_P2_API/issues?q=is%3Aissue+state%3Aclosed+assignee%3ASolian21)<br>
+[Issues on App Repo](https://github.com/Solian21/CST438_P2_Andrioid_App/issues?q=is%3Aissue+state%3Aclosed+assignee%3ASolian21)<br>
+[Pull Requests](https://github.com/Solian21/CST438_P2_API/pulls?q=is%3Apr+state%3Aclosed+author%3ASolian21)<br>
+[Pull Requests on App Repo](https://github.com/Solian21/CST438_P2_Andrioid_App/pulls?q=is%3Apr+state%3Aclosed)<br><br>
+**Worked on**<br>
+- Built the Android App interface 
+  - Created the login and sign up screens
+  - Designed the home screen and navigation menu
+  - Added the Recipe Screens
+- Added Google OAuth to both the Back end and the Android App
 
-## Project Technologies
-- Spring Boot/Java: backend API
-- Neon PostgreSQL: shared database
-- Kotlin: Android frontend
-- Node.js/npx: OpenAPI linting and Prism mock server
 
-## Running the Spring Boot API
-1. Create an `.env` file inside the `api` folder:
+#### Annabelle Baltes - annabelleb20
 
-```properties
-DATABASE_URL=jdbc:postgresql://<neon-host>/neondb?sslmode=require&channelBinding=require
-DB_USER=neondb_owner
-DB_PASS=<your-neon-password>
+[Issues](https://github.com/Solian21/CST438_P2_API/issues?q=is%3Aissue+state%3Aclosed+assignee%3Aannabelleb20)<br>
+[Pull Requests](https://github.com/Solian21/CST438_P2_API/pulls?q=is%3Apr+state%3Aclosed+author%3Aannabelleb20)<br><br>
+**Worked on**<br>
+- Helped set up the online database
+- Built the Meal Plan and Meal Plan Entry database entities
+- Worked on the User GET, PATCH, and DELETE API endpoints
+- Started the work on the API Springboot security and error handling.
+
+
+## How To Set Up Locally
+Pull the repo into Intellij or a similar IDE, then go into the terminal and ensure you are in the api directory.<br>
+Then run `./gradlew build`
+
+[Local Swagger URL](http://localhost:8080/swagger-ui/index.html#/)
+
+## Live URLs
+[Render URL](https://cst438-p2-api.onrender.com)<br>
+[Swagger URL](https://cst438-p2-api.onrender.com/swagger-ui/index.html)
